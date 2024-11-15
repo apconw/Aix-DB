@@ -68,5 +68,13 @@
    poetry install
 
 2. **前端依赖安装**  
-- 前端项目基于chatgpt-vue3-light-mvp开源项目[参考chatgpt-vue3-light-mvp部署](https://github.com/pdsuwwz/chatgpt-vue3-light-mvp***REMOVED***
+- 前端基于chatgpt-vue3-light-mvp开源项目[参考chatgpt-vue3-light-mvp部署](https://github.com/pdsuwwz/chatgpt-vue3-light-mvp***REMOVED***
 
+## 🌹 支持
+
+如果你喜欢这个项目或发现有用，可以点右上角 [`Star`](https://github.com/pdsuwwz/chatgpt-vue3-light-mvp***REMOVED*** 支持一下，你的支持是我们不断改进的动力，感谢！ ^_^ 
+
+
+## License
+
+[MIT](./LICENSE***REMOVED*** License | Copyright © 2020-PRESENT [AiAdventurer](https://github.com/apconw***REMOVED***
