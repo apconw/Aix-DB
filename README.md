@@ -21,15 +21,17 @@
 - **灵活部署**：支持大模型应用开发各依赖组件docker-compose一键拉起快速部署零配置
 
 # 运行效果
-![image](https://raw.githubusercontent.com/apconw/sanic-web/22637f9cfa16aeea727ffed8890899d54c040ce8/images/chat-01.png?token=GHSAT0AAAAAAC2QNOLDA7O5NKEH5DSH5JNMZZXCM6A***REMOVED***
+![image](./images/chat-01.png***REMOVED***
+![image](./images/chat-02.png***REMOVED***
+![image](./images/chat-03.png***REMOVED***
 
 # 🔧 **前置条件**
-- Python 3.8+
-- Poetry 1.8.3+
-- Node.js 18.12.x+
-- Pnpm 9.x
-- Dify 0.7.1+
-- Mysql 8.0+
+* Python 3.8+
+* Poetry 1.8.3+
+* Node.js 18.12.x+
+* Pnpm 9.x
+* Dify 0.7.1+
+* Mysql 8.0+
 
 📚 **大模型部署**
 - [参考Ollama官网部署](https://ollama.com/docs/install***REMOVED***
