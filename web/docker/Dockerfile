@@ -4,12 +4,12 @@ FROM nginx:stable-alpine
 
 # 设置工作目录
 WORKDIR /app
-
-# 将package.json和pnpm-lock.yaml复制到工作目录
-COPY package.json ./
-
-# 复制项目源代码到容器中
-COPY . .
+#
+## 将package.json和pnpm-lock.yaml复制到工作目录
+#COPY package.json ./
+#
+## 复制项目源代码到容器中
+#COPY . .
 
 # 删除默认的Nginx配置
 RUN rm /etc/nginx/conf.d/default.conf

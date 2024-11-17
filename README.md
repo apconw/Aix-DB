@@ -68,8 +68,13 @@
    ```bash
    # 安装项目依赖
    poetry install
+   
+2. **安装中间件**
+   ```bash
+   # 安装mysql&初始化数据库
+   python3 common/initialize_mysql.py
 
-2. **前端依赖安装**  
+3. **前端依赖安装**  
    - 前端基于chatgpt-vue3-light-mvp开源项目[参考chatgpt-vue3-light-mvp安装](https://github.com/pdsuwwz/chatgpt-vue3-light-mvp***REMOVED***
 
 

@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
   chat-web:
-    image: chat-vue3-mvp:1.0
+    image: apconw/chat-vue3-mvp:1.0
     container_name: chat-vue3-mvp
     ports:
       - "8081:80"
@@ -14,8 +14,8 @@ services:
       - dify_service_default
 
   chat-service:
-    image: sanic-app:1.0
-    container_name: sanic-app
+    image: apconw/sanic-web:1.0
+    container_name: sanic-web
     ports:
       - "8088:8088"
     extra_hosts:

@@ -1,0 +1,6 @@
+.git/
+.idea/
+docker/
+tests/
+web/
+images/

@@ -2,7 +2,7 @@
 PROJECT_NAME = chat-vue3-mvp
 
 # Docker 镜像标签
-DOCKER_IMAGE = $(PROJECT_NAME***REMOVED***:1.0
+DOCKER_IMAGE = apconw/$(PROJECT_NAME***REMOVED***:1.0
 
 # Docker 容器名称
 DOCKER_WEB_CONTAINER = $(PROJECT_NAME***REMOVED***
@@ -21,10 +21,7 @@ build:
 docker-build: clean build
 	docker build -t $(DOCKER_IMAGE***REMOVED*** -f ./docker/Dockerfile .
 
-# 推送 Docker 镜像到仓库
-docker-push:
-	docker tag $(DOCKER_IMAGE***REMOVED*** your-dockerhub-username/$(PROJECT_NAME***REMOVED***:vite
-	docker push your-dockerhub-username/$(PROJECT_NAME***REMOVED***:vite
+
 
 # 清理构建产物
 clean:

@@ -1,8 +1,0 @@
-# 忽略 node_modules 目录
-node_modules
-
-# 忽略其他不需要的文件和目录
-*.log
-*.swp
-*.swo
-*.swn
