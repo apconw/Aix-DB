@@ -21,6 +21,14 @@ build:
 docker-build: clean build
 	docker build -t $(DOCKER_IMAGE***REMOVED*** -f ./docker/Dockerfile .
 
+# 构建 Docker linux/amd64 镜像
+docker-build-amd64: clean build
+	docker buildx build --no-cache --platform linux/amd64 --push -t $(DOCKER_IMAGE***REMOVED*** -f ./docker/Dockerfile .
+
+# 构建 Docker linux/arm64 镜像
+docker-build-arm64: clean build
+	docker buildx build --platform linux/arm64 --push -t $(DOCKER_IMAGE***REMOVED*** -f ./docker/Dockerfile .
+
 
 
 # 清理构建产物

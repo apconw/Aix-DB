@@ -49,12 +49,24 @@
 - [参考Ollama官网部署](https://ollama.com/docs/install***REMOVED***
 - 模型: Qwen2.5
 
-
-## 🚀 **快速开始**
-
+## ⚙️ **Dify环境配置**
+1. **本机部署**
    - 为了兼顾第一次接触大模型应用的同学，我们提供了一键拉起Dify服务零配置，同时启动服务方式，方便大家快速体验。
-   - 如果本地已经安装过Dify的同学，可以跳过安装Dify的步骤，直接导入画布***docker/dify/数据问答.yml***修改DiFyAppEnum/DATABASE_QA密钥key即可。
+   - Dify本机访问地址：http://localhost 账号:admin 密码:admin123 
+   ```bash
+   # 拉起内置的dify服务
+   cd docker/dify/docker
+   docker-compose up -d
+   
+2. **已安装Dify环境**
+   - 第一步直接导入画布***docker/dify/数据问答.yml***修改DiFyAppEnum/DATABASE_QA密钥key
+   - 第二步修改项目.env文件，根据环境修改Dify服务接口地址即可
+   - 第三步修改Dify画布里HttpRequest配置，修改url地址为具体服务地址
+
+3. **安装最新版本Dify**
    - 如果需要安装最新版Dify的同学,可以参考官方文档[Dify官方文档](https://docs.dify.ai/zh-hans***REMOVED***。
+   
+## 🚀 **快速开始**
    - 具体步骤如下：
 
 1. **克隆仓库**
@@ -62,12 +74,7 @@
    git clone https://github.com/apconw/sanic-web.git
 
 2. **启动服务**
-   - Dify访问地址：http://localhost 账号:admin 密码:admin123 
    ```bash
-   # 拉起dify服务
-   cd docker/dify/docker
-   docker-compose up -d
-   
    # 拉起前后端服务和中间件
    cd docker
    docker compose up -d
