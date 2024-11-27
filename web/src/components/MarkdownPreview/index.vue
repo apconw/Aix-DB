@@ -452,7 +452,8 @@ const onChartCompletedReader = function (***REMOVED*** {
 ***REMOVED***
     margin-left: 10%;
     margin-right: 10%;
-    background-color: #ffffff;
+    // background-color: #ffffff;
+    background: linear-gradient(to right, #f0effe, #d4eefc***REMOVED***;
     padding: 30px;
     // font-family: 'PMingLiU';
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,

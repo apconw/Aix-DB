@@ -54,6 +54,7 @@ function newChat(***REMOVED*** {
     showDefaultPage.value = true
     isInit.value = false
     conversationItems.value = []
+    stylizingLoading.value = false
 ***REMOVED***
 
 /**
@@ -387,7 +388,6 @@ const scrollToItem = (index: number***REMOVED*** => {
             tableData,
             currentRenderIndex
         ***REMOVED***
-        console.log(isInit.value***REMOVED***
     ***REMOVED***
     //关闭默认页面
     showDefaultPage.value = false
@@ -413,7 +413,7 @@ const onAqtiveChange = (val***REMOVED*** => {
                 @click="newChat"
                 strong
                 style="
-                    width: 160px;
+                    width: 180px;
                     height: 38px;
                     margin: 15px;
                     align-self: center;
@@ -500,9 +500,11 @@ const onAqtiveChange = (val***REMOVED*** => {
                 ref="messagesContainer"
   ***REMOVED***
                 <!--默认对话页面-->
-      ***REMOVED***v-if="showDefaultPage">
-                    <DefaultPage />
-    ***REMOVED***
+                <transition name="fade">
+          ***REMOVED***v-if="showDefaultPage">
+                        <DefaultPage />
+        ***REMOVED***
+                </transition>
 
                 <div
                     v-if="!showDefaultPage"
@@ -871,8 +873,20 @@ const onAqtiveChange = (val***REMOVED*** => {
 ***REMOVED***
 
 .active-tab {
-    background: linear-gradient(to left, #f3f2ff, #e1e7fe***REMOVED***;
+    // background: linear-gradient(to left, #f3f2ff, #e1e7fe***REMOVED***;
+    background: linear-gradient(to left, #f0effe, #d4eefc***REMOVED***;
     border-color: #635eed;
     color: #635eed;
+***REMOVED***
+
+/* 新建对话框的淡入淡出动画样式 */
+.fade-enter-active {
+    transition: opacity 1s; /* 出现时较慢 */
+***REMOVED***
+.fade-leave-active {
+    transition: opacity 0s; /* 隐藏时较快 */
+***REMOVED***
+.fade-enter, .fade-leave-to /* .fade-leave-active in <2.1.8 */ {
+    opacity: 0;
 ***REMOVED***
 ***REMOVED***

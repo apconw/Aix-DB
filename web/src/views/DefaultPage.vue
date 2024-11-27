@@ -35,7 +35,7 @@
 ***REMOVED***
 ***REMOVED***
         <div class="content">
-  ***REMOVED***class="card-two">
+  ***REMOVED***class="card-one">
                 <h4 class="title">通用问答</h4>
                 <p class="card-subtitle">基于RAG大模型的通用问答</p>
                 <ul>
@@ -48,7 +48,7 @@
                     </li>
                 </ul>
 ***REMOVED***
-  ***REMOVED***class="card-one">
+  ***REMOVED***class="card-two">
                 <h4 class="title">数据问答</h4>
                 <p class="card-subtitle">基于大模型的数据问答</p>
                 <ul>
@@ -153,23 +153,30 @@ body {
     gap: 20px;
   ***REMOVED***
 ***REMOVED***
-
-.card-one,
-.card-two,
+.card-one {
+  ***REMOVED***
+  ***REMOVED***
+    background: linear-gradient(to bottom, #f0effe, #d4eefc***REMOVED***;
+***REMOVED***
+.card-two {
+  ***REMOVED***
+  ***REMOVED***
+    background: linear-gradient(to right, #f0effe, #d4eefc***REMOVED***;
+***REMOVED***
 .card-three {
   ***REMOVED***
   ***REMOVED***
-    background: linear-gradient(to left, #f3f2ff, #e1e7fe***REMOVED***;
+    background: linear-gradient(to left, #f0effe, #d4eefc***REMOVED***;
 ***REMOVED***
 .card-subtitle {
 ***REMOVED***/* Remove default margin */
-    font-size: 1em; /* Adjust as needed */
+    font-size: 13px; /* Adjust as needed */
     color: #6c757d; /* Optional: to match the color of .header-subtitle */
 ***REMOVED***
 
 .title {
     color: #333;
-    font-size: 20px;
+    font-size: 17px;
     margin-bottom: 5px;
 ***REMOVED***
 
