@@ -64,7 +64,7 @@
    - 第一步直接导入项目根目录下的**docker/dify/数据问答.yml画布**至Dify
    - 第二步修改源码DiFyAppEnum枚举里的DATABASE_QA密钥Key(**key从dify流程画布中获取*****REMOVED***
    - 第三步修改项目根目录下的.env文件，根据环境修改实际的Dify Rest服务接口地址即可
-   - 第三步修改Dify画布里HttpRequest配置，修改url地址为具体sanic-web服务地址
+   - 第四步修改Dify画布里HttpRequest配置，修改url地址为具体sanic-web服务地址
 
 3. **安装最新版本Dify**
    - 如果需要安装最新版Dify的同学,可以参考官方文档[Dify官方文档](https://docs.dify.ai/zh-hans***REMOVED***。
