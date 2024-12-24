@@ -38,7 +38,8 @@ services:
     networks:
       - dify_service_default
 
+# dify_service_default网络第一步安装内置Dify自动创建的
 networks:
   dify_service_default:
-    external: false
+    external: true
     driver: bridge
