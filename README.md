@@ -162,7 +162,6 @@
 
 ## 🐳 构建镜像
 - 编辑项目根目录下的.env文件，***修改ENV=test***，并保存。
-- 调整项目根目录下web/docker/nginx.conf文件，修改nginx里/sanic路由配置
 - 执行构建命令：
    ```bash
    # 构建前端镜像 
