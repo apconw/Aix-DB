@@ -4,7 +4,6 @@ from common.exception import MyException
 from common.res_decorator import async_json_resp
 from common.token_decorator import check_token
 from constants.code_enum import SysCodeEnum
-from services.dify_service import query_dify_suggested
 from services.user_service import (
     authenticate_user,
     generate_jwt_token,

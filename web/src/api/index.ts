@@ -134,3 +134,27 @@ export async function fead_back(chat_id, rating***REMOVED*** {
     ***REMOVED******REMOVED***
     return fetch(req***REMOVED***
 ***REMOVED***
+
+/**
+ * 问题建议
+ * @param chat_id
+ * @param rating
+ * @returns
+ */
+export async function dify_suggested(chat_id***REMOVED*** {
+    const userStore = useUserStore(***REMOVED***
+    const token = userStore.getUserToken(***REMOVED***
+    const url = new URL(`${location.origin***REMOVED***/sanic/dify/get_dify_suggested`***REMOVED***
+    const req = new Request(url, {
+        mode: 'cors',
+        method: 'post',
+  ***REMOVED***
+    ***REMOVED***
+            Authorization: `Bearer ${token***REMOVED***` // 添加 token 到头部
+        ***REMOVED***,
+  ***REMOVED***
+            chat_id
+        ***REMOVED******REMOVED***
+    ***REMOVED******REMOVED***
+    return fetch(req***REMOVED***
+***REMOVED***

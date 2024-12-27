@@ -290,12 +290,11 @@ async def query_dify_suggested(chat_id***REMOVED*** -> dict:
     """
     # 查询对话记录
     qa_record = query_user_qa_record(chat_id***REMOVED***
-    url = DiFyRestApi.replace_path_params(DiFyRestApi.DIFY_REST_SUGGESTED, {"message_id": chat_id***REMOVED******REMOVED***
+    url = DiFyRestApi.replace_path_params(DiFyRestApi.DIFY_REST_SUGGESTED, {"message_id": qa_record[0]["message_id"]***REMOVED******REMOVED***
     api_key = os.getenv("DIFY_DATABASE_QA_API_KEY"***REMOVED***
     headers = {"Authorization": f"Bearer {api_key***REMOVED***", "Content-Type": "application/json"***REMOVED***
 
     response = requests.get(url + "?user=abc-123", headers=headers***REMOVED***
-    print(response.text***REMOVED***
 
     # 检查请求是否成功
     if response.status_code == 200:

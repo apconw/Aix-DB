@@ -5,6 +5,8 @@ import { useRouter ***REMOVED*** from 'vue-router'
 import { UAParser ***REMOVED*** from 'ua-parser-js'
 import TableModal from './TableModal.vue'
 import DefaultPage from './DefaultPage.vue'
+import SuggestedView from './Suggested.vue'
+
 const route = useRoute(***REMOVED***
 const router = useRouter(***REMOVED***
 const message = useMessage(***REMOVED***
@@ -115,6 +117,8 @@ const onCompletedReader = (index: number***REMOVED*** => {
             ***REMOVED***
         ***REMOVED******REMOVED***
     ***REMOVED***
+
+    query_dify_suggested(***REMOVED***
     // scrollToBottom(***REMOVED***
 ***REMOVED***
 
@@ -185,6 +189,7 @@ const visibleConversationItems = computed((***REMOVED*** => {
     return conversationItems.value.slice(0, currentRenderIndex.value + 1***REMOVED***
 ***REMOVED******REMOVED***
 
+const uuid = ref(''***REMOVED***
 //提交对话
 const handleCreateStylized = async (send_text = ''***REMOVED*** => {
     //设置初始化数据标识为false
@@ -235,10 +240,11 @@ const handleCreateStylized = async (send_text = ''***REMOVED*** => {
         ? inputTextString.value
         : send_text
     inputTextString.value = ''
-    const uuid = uuidv4(***REMOVED***
+
+    uuid.value = uuidv4(***REMOVED***
     const { error, reader, needLogin ***REMOVED*** =
         await businessStore.createAssistantWriterStylized(
-            uuid,
+            uuid.value,
             currentChatId.value,
           ***REMOVED***
                 text: textContent,
@@ -265,7 +271,7 @@ const handleCreateStylized = async (send_text = ''***REMOVED*** => {
         outputTextReader.value = reader
         // 存储该轮对话消息
         conversationItems.value.push({
-            chat_id: uuid,
+            chat_id: uuid.value,
             qa_type: qa_type.value,
             question: textContent,
       ***REMOVED***
@@ -445,6 +451,17 @@ const onAqtiveChange = (val***REMOVED*** => {
         businessStore.update_file_url(''***REMOVED***
     ***REMOVED***
 ***REMOVED***
+
+const suggested_array = ref([]***REMOVED***
+//获取建议问题
+const query_dify_suggested = async (***REMOVED*** => {
+    if (!isInit.value***REMOVED*** {
+        const res = await GlobalAPI.dify_suggested(uuid.value***REMOVED***
+        const json = await res.json(***REMOVED***
+        console.log('res', json.data.data***REMOVED***
+        suggested_array.value = json.data.data
+    ***REMOVED***
+***REMOVED***
 ***REMOVED***
 ***REMOVED***
     <LayoutCenterPanel :loading="loading">
@@ -569,6 +586,12 @@ const onAqtiveChange = (val***REMOVED*** => {
                         @praiseFeadBack="(***REMOVED*** => onPraiseFeadBack(index***REMOVED***"
                         @belittleFeedback="(***REMOVED*** => onBelittleFeedback(index***REMOVED***"
           ***REMOVED***
+    ***REMOVED***
+                <div
+                    v-if="!isInit && !stylizingLoading"
+                    style="align-items: center; width: 70%; margin-left: 11%"
+      ***REMOVED***
+                    <SuggestedView :labels="suggested_array" />
     ***REMOVED***
 ***REMOVED***
 
