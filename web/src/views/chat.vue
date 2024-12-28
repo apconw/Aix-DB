@@ -58,6 +58,7 @@ function newChat(***REMOVED*** {
     isInit.value = false
     conversationItems.value = []
     stylizingLoading.value = false
+    suggested_array.value = []
 ***REMOVED***
 
 /**
@@ -132,11 +133,9 @@ const onChartReady = (index***REMOVED*** => {
 ***REMOVED***
 
 const onRecycleQa = async (index: number***REMOVED*** => {
-    const item = conversationItems.value[index]
-    // console.log(item.question, item.qa_type***REMOVED***
     //设置当前选中的问答类型
+    const item = conversationItems.value[index]
     onAqtiveChange(item.qa_type***REMOVED***
-
     //发送问题重新生成
     handleCreateStylized(item.question***REMOVED***
 ***REMOVED***
@@ -189,11 +188,15 @@ const visibleConversationItems = computed((***REMOVED*** => {
     return conversationItems.value.slice(0, currentRenderIndex.value + 1***REMOVED***
 ***REMOVED******REMOVED***
 
+// chat_id定义
 const uuid = ref(''***REMOVED***
 //提交对话
 const handleCreateStylized = async (send_text = ''***REMOVED*** => {
     //设置初始化数据标识为false
     isInit.value = false
+
+    //清空推荐列表
+    suggested_array.value = []
 
     // 若正在加载，则点击后恢复初始状态
     if (stylizingLoading.value***REMOVED*** {
@@ -223,7 +226,6 @@ const handleCreateStylized = async (send_text = ''***REMOVED*** => {
         // 新建对话 时输入新问题 清空历史数据
         conversationItems.value = []
         showDefaultPage.value = false
-        // isInit.value = false
     ***REMOVED***
 
     //加入对话历史用于左边表格渲染
@@ -452,15 +454,25 @@ const onAqtiveChange = (val***REMOVED*** => {
     ***REMOVED***
 ***REMOVED***
 
-const suggested_array = ref([]***REMOVED***
 //获取建议问题
+const suggested_array = ref([]***REMOVED***
 const query_dify_suggested = async (***REMOVED*** => {
     if (!isInit.value***REMOVED*** {
         const res = await GlobalAPI.dify_suggested(uuid.value***REMOVED***
         const json = await res.json(***REMOVED***
-        console.log('res', json.data.data***REMOVED***
         suggested_array.value = json.data.data
     ***REMOVED***
+
+    // 滚动到底部
+    scrollToBottom(***REMOVED***
+***REMOVED***
+// 建议问题点击事件
+const onSuggested = (index: number***REMOVED*** => {
+    // 如果是报告问答的建议问题点击后切换到通用对话
+    if (qa_type.value == 'REPORT_QA'***REMOVED*** {
+        onAqtiveChange('COMMON_QA'***REMOVED***
+    ***REMOVED***
+    handleCreateStylized(suggested_array.value[index]***REMOVED***
 ***REMOVED***
 ***REMOVED***
 ***REMOVED***
@@ -589,9 +601,17 @@ const query_dify_suggested = async (***REMOVED*** => {
     ***REMOVED***
                 <div
                     v-if="!isInit && !stylizingLoading"
-                    style="align-items: center; width: 70%; margin-left: 11%"
+                    style="
+                        align-items: center;
+                        width: 70%;
+                        margin-left: 11%;
+                        margin-top: -24px;
+                    "
       ***REMOVED***
-                    <SuggestedView :labels="suggested_array" />
+                    <SuggestedView
+                        :labels="suggested_array"
+                        @suggested="onSuggested"
+          ***REMOVED***
     ***REMOVED***
 ***REMOVED***
 

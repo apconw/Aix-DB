@@ -26,6 +26,9 @@ const props = withDefaults(defineProps<Props>(***REMOVED***, {
     labels: (***REMOVED*** => []
 ***REMOVED******REMOVED***
 
+// 自定义事件用于 子父组件传递事件信息
+const emit = defineEmits(['suggested']***REMOVED***
+
 // 定义默认按钮文案
 const defaultLabels = []
 
@@ -36,7 +39,7 @@ const buttonLabels = computed((***REMOVED*** =>
 
 // 点击事件处理函数
 const handleClick = (index: number***REMOVED*** => {
-    console.log(`Button ${index***REMOVED*** clicked. Label: ${buttonLabels.value[index]***REMOVED***`***REMOVED***
+    emit('suggested', index***REMOVED***
 ***REMOVED***
 ***REMOVED***
 
@@ -48,11 +51,12 @@ const handleClick = (index: number***REMOVED*** => {
 
 .block-button {
 ***REMOVED*** /* 使每个按钮独占一行 */
-    margin: 5px 0; /* 调整上下间距 */
-    background-color: #ffffff;
+    margin: 10px 4px; /* 调整上下间距 */
   ***REMOVED***
-    height: 40px;
   ***REMOVED***
-    fontsize: 14px;
+    height: 38px;
+  ***REMOVED***
+    font-size: 13px;
+    font-family: 'PMingLiU';
 ***REMOVED***
 ***REMOVED***
