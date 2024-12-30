@@ -14,7 +14,7 @@ minio_utils = MinioUtils(***REMOVED***
 @async_json_resp
 async def read_file(req: Request***REMOVED***:
     """
-    读取文件内容
+    读取excel文件第一行内容
     :param req:
     :return:
     """
