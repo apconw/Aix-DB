@@ -171,6 +171,8 @@ CREATE TABLE `t_user_qa_record` (
   `question` varchar(500***REMOVED*** CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '用户问题',
   `to2_answer` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci COMMENT '大模型答案',
   `to4_answer` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci COMMENT '业务数据',
+  `qa_type` varchar(100***REMOVED*** COMMENT '问答类型',
+  `file_key` varchar(100***REMOVED*** COMMENT '文件minio/key',
   `create_time` timestamp NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
   PRIMARY KEY (`id`***REMOVED***,
   UNIQUE KEY `t_user_qa_record_UN` (`user_id`,`chat_id`***REMOVED***

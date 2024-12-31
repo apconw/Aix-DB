@@ -2,8 +2,9 @@ version: '3.8'
 
 services:
   chat-web:
-    image: apconw/chat-vue3-mvp:1.0
+    image: apconw/chat-vue3-mvp:1.1
     container_name: chat-vue3-mvp
+
     ports:
       - "8081:80"
     extra_hosts:
@@ -13,9 +14,31 @@ services:
     networks:
       - dify_service_default
 
+  minio:
+    image: minio/minio:latest
+    container_name: minio
+    ports:
+      - "19000:9000"
+      - "19001:9001"
+    volumes:
+      - ./volume/minio/data:/data
+    environment:
+      - MINIO_ROOT_USER=admin
+      - MINIO_ROOT_PASSWORD=12345678
+    command: server /data --console-address ":9001"
+    networks:
+      - dify_service_default
+
   chat-service:
-    image: apconw/sanic-web:1.0
+    image: apconw/sanic-web:1.1
     container_name: sanic-web
+    environment:
+      - ENV=test
+      - DIFY_SERVER_URL=http://host.docker.internal:18000
+      - DIFY_DATABASE_QA_API_KEY=app-HweY9lluF8ennstah2VF7g08
+      - MINIO_ENDPOINT=host.docker.internal:19000
+      - MINIO_ACCESS_KEY=sIR5eeDkiwoo779yNJbw
+      - MiNIO_SECRET_KEY=MreuQ3aC1ymHJeo3QfzSg7aPz7PqlxeOw39nZUdE
     ports:
       - "8088:8088"
     extra_hosts:
@@ -41,5 +64,5 @@ services:
 # dify_service_default网络第一步安装内置Dify自动创建的
 networks:
   dify_service_default:
-    external: true
+#    external: true
     driver: bridge

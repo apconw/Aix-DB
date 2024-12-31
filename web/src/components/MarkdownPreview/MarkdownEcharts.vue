@@ -1,23 +1,23 @@
 ***REMOVED***
-    <div style="background-color: #fff; padding: 30px">
+    <div style="background-color: #fff">
         <n-card
             :title="currentChartTypeName"
             embedded
             bordered
             :content-style="{
-                'background-color': '#F8F8FF'
+                'background-color': '#ffffff'
             ***REMOVED***"
             :header-style="{
                 color: '#666',
                 height: '10px',
-                'background-color': '#EEEEF5',
+                'background-color': '#f0effe',
                 'text-align': 'left',
                 'font-size': '14px',
                 'font-family': 'PMingLiU'
             ***REMOVED***"
             :footer-style="{
                 color: '#666',
-                'background-color': '#f8f8ff',
+                'background-color': '#ffffff',
                 'text-align': 'left',
                 'font-size': '14px',
                 'font-family': 'PMingLiU'
@@ -28,7 +28,7 @@
                   ***REMOVED***
                     height: 500px;
                     padding: 30px;
-                    background-color: #f8f8ff;
+                    background-color: #ffffff;
                 "
                 :id="chartId"
   ***REMOVED***

@@ -23,11 +23,7 @@ class MinioUtils:
     @staticmethod
     def _build_client(***REMOVED***:
         """初始化MinIO客户端"""
-        if os.getenv("ENV"***REMOVED*** == "test":
-            minio_endpoint = os.getenv("MINIO_ENDPOINT_TEST"***REMOVED***
-        else:
-            minio_endpoint = os.getenv("MINIO_ENDPOINT_DEV"***REMOVED***
-
+        minio_endpoint = os.getenv("MINIO_ENDPOINT"***REMOVED***
         access_key = os.getenv("MINIO_ACCESS_KEY"***REMOVED***
         secret_key = os.getenv("MiNIO_SECRET_KEY"***REMOVED***
         return Minio(endpoint=minio_endpoint, access_key=access_key, secret_key=secret_key, secure=False***REMOVED***

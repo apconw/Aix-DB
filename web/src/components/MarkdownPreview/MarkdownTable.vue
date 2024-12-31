@@ -1,5 +1,5 @@
 ***REMOVED***
-    <div style="background-color: #fff">
+    <div style="background-color: #ffffff">
         <n-card
             title="表格"
             embedded
@@ -8,7 +8,7 @@
             :header-style="{
                 color: '#666',
                 height: '10px',
-                'background-color': '#EEEEF5',
+                'background-color': '#f0effe',
                 'text-align': 'left',
                 'font-size': '14px',
                 'font-family': 'PMingLiU'
@@ -25,13 +25,13 @@
                 style="
                   ***REMOVED***
                     justify-content: space-between;
-                  ***REMOVED***
+                    margin-bottom: 10`px;
                 "
   ***REMOVED***</div>
             <n-data-table
                 style="
                     height: 550px;
-                    margin-top: 15px;
+                  ***REMOVED***
                     background-color: #ffffff;
                   ***REMOVED***
                 "

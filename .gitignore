@@ -12,3 +12,5 @@ web/.vscode/
 
 .DS_Store
 .idea/
+
+logs/

@@ -10,6 +10,7 @@ declare module 'vue' {
     404: typeof import('./src/components/404.vue'***REMOVED***['default']
     ClipBoard: typeof import('./src/components/ClipBoard/index.vue'***REMOVED***['default']
     IconFont: typeof import('./src/components/IconFont/index.vue'***REMOVED***['default']
+    IconFontQatypeIcon: typeof import('./src/components/IconFont/QatypeIcon.vue'***REMOVED***['default']
     IconifyIcon: typeof import('./src/components/IconifyIcon/index.vue'***REMOVED***['default']
     LayoutCenterPanel: typeof import('./src/components/Layout/CenterPanel.vue'***REMOVED***['default']
     LayoutDefault: typeof import('./src/components/Layout/default.vue'***REMOVED***['default']

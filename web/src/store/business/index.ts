@@ -41,6 +41,7 @@ export const useBusinessStore = defineStore('business-store', {
          * Event Stream 调用大模型python服务接口
          */
         async createAssistantWriterStylized(
+            uuid,
             writerOid,
             data
         ***REMOVED***: Promise<{
@@ -124,7 +125,7 @@ export const useBusinessStore = defineStore('business-store', {
                 ***REMOVED***
 
                 // 调用后端接口拿大模型结果
-                GlobalAPI.createOllama3Stylized(query_str, this.qa_type***REMOVED***
+                GlobalAPI.createOllama3Stylized(query_str, this.qa_type, uuid***REMOVED***
                     .then((res***REMOVED*** => resolve(processResponse(res***REMOVED******REMOVED******REMOVED***
                     .catch((err***REMOVED*** => {
                         console.error('Request failed:', err***REMOVED***

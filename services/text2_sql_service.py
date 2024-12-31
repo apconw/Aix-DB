@@ -1,14 +1,21 @@
+import io
 import json
 import logging
+
+import duckdb
+import pandas as pd
+import requests
+
 from common.date_util import DateEncoder
-from constants.code_enum import SysCodeEnum as SysCode
 from common.exception import MyException
+from common.minio_util import MinioUtils
 from common.mysql_util import MysqlUtil
+from constants.code_enum import SysCodeEnum as SysCode
 
 logger = logging.getLogger(__name__***REMOVED***
 
 
-async def exe_sql_query(question_str, model_out_str***REMOVED***:
+async def exe_sql_query(model_out_str***REMOVED***:
     """
     执行大模型解析出的sql语句并返回结果集
     Args:
@@ -17,8 +24,6 @@ async def exe_sql_query(question_str, model_out_str***REMOVED***:
     """
 
     if model_out_str:
-        exception_str = ""
-        model_out_json = ""
         try:
             model_out_json = json.loads(model_out_str***REMOVED***
             if not isinstance(model_out_json, dict***REMOVED***:
@@ -26,7 +31,6 @@ async def exe_sql_query(question_str, model_out_str***REMOVED***:
             sql = model_out_json["sql"]
             if sql:
                 result = MysqlUtil(***REMOVED***.query_ex(sql***REMOVED***
-                # 这里不从数据库查 配置文件定义 避免三方不开权限问题
                 table_schema_dict = MysqlUtil(***REMOVED***.get_multiple_tables_column_comments(["view_alarm_detail"]***REMOVED***
                 table_schema_dict["llm"] = model_out_json
                 table_schema_dict["data"] = result
@@ -35,26 +39,70 @@ async def exe_sql_query(question_str, model_out_str***REMOVED***:
                 logger.error("数据应答大模型返回SQL语句为空"***REMOVED***
                 raise MyException(SysCode.c_9999***REMOVED***
         except Exception as e:
-            exception_str = e.args[0]
             logger.error(f"数据应答处理失败: {model_out_str***REMOVED*** {e***REMOVED***"***REMOVED***
             raise MyException(SysCode.c_9999***REMOVED***
-        finally:
-            await add_question_record(question_str, model_out_json, exception_str***REMOVED***
     else:
         logger.error("数据应答大模型返回结果为空"***REMOVED***
         raise MyException(SysCode.c_9999***REMOVED***
 
 
-async def add_question_record(question, model_out_json, exception_str***REMOVED***:
+async def exe_file_sql_query(file_key, model_out_str***REMOVED***:
     """
-    记录数据问答 日志
+    文件问答: 执行大模型解析出的SQL语句并返回结果集
+
+    Args:
+        file_key (str***REMOVED***: 文件key
+        model_out_str (str***REMOVED***: 大模型输出信息
+
+    Returns:
+        dict: {"column":[], "result":[]***REMOVED***
+
+    Raises:
+        MyException: 当文件问答大模型返回结果为空或SQL语句为空时抛出异常
     """
-    pass
-    # try:
-    #     insert_params = [question, str(model_out_json***REMOVED***, exception_str]
-    #     sql = f" insert into t_database_qa_record(question,thoughts,error_msg***REMOVED*** values (%s,%s,%s***REMOVED***"
-    #     # logging.info(f"police_database_qa_record.创建数据 sql= {sql***REMOVED*** value={insert_params***REMOVED***"***REMOVED***
-    #     result = MysqlUtil(***REMOVED***.insert(sql=sql, params=insert_params***REMOVED***
-    #     logging.info(result***REMOVED***
-    # except Exception as e:
-    #     logger.error(f"数据问答保存日志失败: {e***REMOVED***"***REMOVED***
+    if not model_out_str:
+        logger.error("文件问答大模型返回结果为空"***REMOVED***
+        raise MyException(SysCode.c_9999***REMOVED***
+
+    try:
+        # 获取文件URL
+        file_url = MinioUtils(***REMOVED***.get_file_url_by_key(object_key=file_key***REMOVED***
+        extension = file_key.split("."***REMOVED***[-1].lower(***REMOVED***
+
+        # 根据文件类型读取数据
+        if extension in ["xlsx", "xls"]:
+            response = requests.get(file_url***REMOVED***
+            df = pd.read_excel(io.BytesIO(response.content***REMOVED***, engine="openpyxl"***REMOVED***
+        elif extension == "csv":
+            df = pd.read_csv(file_url***REMOVED***
+        else:
+            logger.error(f"不支持的文件扩展名: {extension***REMOVED***"***REMOVED***
+            raise MyException(SysCode.c_9999***REMOVED***
+
+        # 连接到DuckDB (这里使用内存数据库***REMOVED*** 并注册DataFrame
+        con = duckdb.connect(database=":memory:"***REMOVED***
+        con.register("excel_table", df***REMOVED***
+
+        # 解析模型输出并获取SQL语句
+        model_out_json = json.loads(model_out_str***REMOVED***
+        sql = model_out_json.get("sql", ""***REMOVED***.replace("`", ""***REMOVED***  # 移除反引号以避免SQL语法错误
+
+        if not sql.strip(***REMOVED***:
+            logger.error("文件问答大模型返回SQL语句为空"***REMOVED***
+            raise MyException(SysCode.c_9999***REMOVED***
+
+        # 执行SQL查询
+        cursor = con.execute(sql***REMOVED***
+
+        # 获取列名称和查询结果的数据行
+        columns = [description[0] for description in cursor.description]
+        rows = cursor.fetchall(***REMOVED***
+
+        # 构建结果字典
+        result = [dict(zip(columns, row***REMOVED******REMOVED*** for row in rows]
+
+        return json.dumps({"llm": model_out_json, "data": {"column": columns, "result": result***REMOVED******REMOVED***, ensure_ascii=False, cls=DateEncoder***REMOVED***
+
+    except Exception as e:
+        logger.error(f"文件问答处理失败: {model_out_str***REMOVED***, Error: {e***REMOVED***"***REMOVED***
+        raise MyException(SysCode.c_9999***REMOVED***
