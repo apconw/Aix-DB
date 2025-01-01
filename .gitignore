@@ -5,6 +5,7 @@ __pycache__/
 
 tests/
 docker/volume/
+docker/dify/volume/
 
 web/node_modules/
 web/dist/
