@@ -1,8 +1,3 @@
-<script lang="ts" setup>
-import { systemTitle ***REMOVED*** from '@/base'
-const isCollapsed = ref(false***REMOVED***
-***REMOVED***
-
 ***REMOVED***
     <LayoutSlotCenterPanel v-bind="$attrs">
         <template #left> ***REMOVED***

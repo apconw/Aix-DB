@@ -35,6 +35,7 @@
     "lodash-es": "^4.17.21",
     "marked": "^13.0.1",
     "markmap-lib": "^0.18.8",
+    "markmap-toolbar": "^0.18.8",
     "markmap-view": "^0.18.8",
     "naive-ui": "^2.38.2",
     "nprogress": "^0.2.0",
