@@ -5,7 +5,7 @@ include web/Makefile
 SERVER_PROJECT_NAME = sanic-web
 
 # 服务端 Docker 镜像标签
-SERVER_DOCKER_IMAGE = apconw/$(SERVER_PROJECT_NAME***REMOVED***:1.1
+SERVER_DOCKER_IMAGE = apconw/$(SERVER_PROJECT_NAME***REMOVED***:1.1.1
 
 
 # 构建 Vue 3 前端项目镜像

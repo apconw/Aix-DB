@@ -2,7 +2,7 @@
 PROJECT_NAME = chat-vue3-mvp
 
 # Docker 镜像标签
-DOCKER_IMAGE = apconw/$(PROJECT_NAME***REMOVED***:1.1
+DOCKER_IMAGE = apconw/$(PROJECT_NAME***REMOVED***:1.1.1
 
 # Docker 容器名称
 DOCKER_WEB_CONTAINER = $(PROJECT_NAME***REMOVED***

@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
   chat-web:
-    image: apconw/chat-vue3-mvp:1.1
+    image: apconw/chat-vue3-mvp:1.1.1
     container_name: chat-vue3-mvp
     ports:
       - "8081:80"
@@ -25,7 +25,7 @@ services:
     command: server /data --console-address ":9001"
 
   chat-service:
-    image: apconw/sanic-web:1.1
+    image: apconw/sanic-web:1.1.1
     container_name: sanic-web
     environment:
       - ENV=test
