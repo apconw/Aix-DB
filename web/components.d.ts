@@ -41,7 +41,6 @@ declare module 'vue' {
     NLayoutContent: typeof import('naive-ui'***REMOVED***['NLayoutContent']
     NLayoutFooter: typeof import('naive-ui'***REMOVED***['NLayoutFooter']
     NLayoutHeader: typeof import('naive-ui'***REMOVED***['NLayoutHeader']
-    NLayoutSider: typeof import('naive-ui'***REMOVED***['NLayoutSider']
     NLoadingBarProvider: typeof import('naive-ui'***REMOVED***['NLoadingBarProvider']
     NMessageProvider: typeof import('naive-ui'***REMOVED***['NMessageProvider']
     NModal: typeof import('naive-ui'***REMOVED***['NModal']

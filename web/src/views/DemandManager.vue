@@ -110,14 +110,16 @@
 
             <!-- 实时显示推送的内容 -->
   ***REMOVED***class="real-time-content" ref="realTimeContent">
-                <p v-for="(message, index***REMOVED*** in messages" :key="index">
-                  ***REMOVED***{ message ***REMOVED******REMOVED***
-                </p>
-                <div
-                    class="i-svg-spinners:pulse-2 c-#fff"
-                    style="width: 24px; height: 24px"
-      ***REMOVED***</div>
+                <p
+                    v-for="(message, index***REMOVED*** in messages"
+                    :key="index"
+                    v-html="marked(message***REMOVED***"
+      ***REMOVED***</p>
 ***REMOVED***
+            <div
+                class="i-svg-spinners:pulse-2 c-#26244c"
+                style="width: 30px; height: 30px; margin-left: -8px"
+  ***REMOVED***</div>
         </n-modal>
     </LayoutCenterPanel>
 ***REMOVED***
@@ -126,7 +128,7 @@
 import { ref ***REMOVED*** from 'vue'
 import { NLayout, NLayoutHeader, NLayoutContent ***REMOVED*** from 'naive-ui'
 import * as GlobalAPI from '@/api'
-
+import { marked ***REMOVED*** from 'marked' // 引入 marked 库
 const loading = ref(true***REMOVED***
 
 //文件上传
@@ -166,7 +168,7 @@ function startExtraction(itemId***REMOVED*** {
         if (data.type === 'progress'***REMOVED*** {
             // 更新进度条
             progress.value = data.progress
-            messages.value.push(`进度: ${data.progress***REMOVED***%`***REMOVED***
+            // messages.value.push(`进度: ${data.progress***REMOVED***%`***REMOVED***
         ***REMOVED*** else if (data.type === 'log'***REMOVED*** {
             // 显示日志信息
             messages.value.push(data.message***REMOVED***
@@ -185,7 +187,7 @@ function startExtraction(itemId***REMOVED*** {
     eventSource.onerror = function (error***REMOVED*** {
         console.error('EventSource failed:', error***REMOVED***
         messages.value = []
-        messages.value.push('发生错误，请稍后再试'***REMOVED***
+        // messages.value.push('发生错误，请稍后再试'***REMOVED***
         eventSource.close(***REMOVED***
         showAbModal.value = false
     ***REMOVED***
@@ -194,7 +196,8 @@ function startExtraction(itemId***REMOVED*** {
 // 滚动到底部的函数
 function scrollToBottom(***REMOVED*** {
     if (realTimeContent.value***REMOVED*** {
-        realTimeContent.value.scrollTop = realTimeContent.value.scrollHeight
+        realTimeContent.value.scrollTop =
+            realTimeContent.value.scrollHeight + 20
     ***REMOVED***
 ***REMOVED***
 
@@ -376,15 +379,40 @@ form-item-inline {
     margin-right: 15px; /* 设置标签与输入框之间的间距 */
 ***REMOVED***
 
+/* 滚动条整体部分 */
+::-webkit-scrollbar {
+    width: 8px; /* 竖向滚动条宽度 */
+    height: 8px; /* 横向滚动条高度 */
+***REMOVED***
+/* 滚动条的轨道 */
+::-webkit-scrollbar-track {
+    background: #fff; /* 轨道背景色 */
+***REMOVED***
+
+/* 滚动条的滑块 */
+::-webkit-scrollbar-thumb {
+    background: #cac9f9; /* 滑块颜色 */
+  ***REMOVED*** /* 滑块圆角 */
+***REMOVED***
+
+/* 滚动条的滑块在悬停状态下的样式 */
+::-webkit-scrollbar-thumb:hover {
+    background: #cac9f9; /* 悬停时滑块颜色 */
+***REMOVED***
 .real-time-content {
-    margin-top: 20px;
-    max-height: 300px;
   ***REMOVED***
-    border-top: 0px solid #ccc;
+    max-height: 300px;
+    overflow-y: hidden;
+    border: 0px solid #ccc;
     padding-top: 10px;
-    background-color: black; /* 黑色背景 */
-    color: #ffffff;
+    background-color: #ffffff; /* 黑色背景 */
+    color: #26244c;
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
         'Helvetica Neue', Arial, sans-serif;
+***REMOVED***
+
+/* 当鼠标悬停时改变overflow-y属性 */
+.real-time-content:hover {
+  ***REMOVED***
 ***REMOVED***
 ***REMOVED***

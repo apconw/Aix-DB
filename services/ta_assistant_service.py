@@ -3,8 +3,8 @@ import base64
 import json
 import logging
 import os
-import re
 import traceback
+from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
 from io import BytesIO
 from math import ceil
@@ -220,9 +220,6 @@ async def delete_demand_records(record_id***REMOVED***:
     mysql_client.execute_mysql(delete_sql***REMOVED***
 
 
-import traceback
-from concurrent.futures import ThreadPoolExecutor
-
 executor = ThreadPoolExecutor(***REMOVED***
 
 
@@ -238,37 +235,33 @@ async def abstract_doc_func(response, doc_id***REMOVED***:
 
         sql = f"select * from t_demand_doc_meta where demand_id='{doc_id***REMOVED***'"
         meta_dict = mysql_client.query_mysql_dict(sql***REMOVED***
-        # 使用meta_dict的长度作为总步骤数
         total_steps = len(meta_dict***REMOVED***
 
-        for step, item in enumerate(meta_dict***REMOVED***:  # 假设meta_dict是一个列表，如果它是字典，请根据实际情况调整遍历方式
-            await response.write(f'data: {{"type": "progress", "progress": {(step+1***REMOVED****10***REMOVED***, "total": {total_steps***REMOVED******REMOVED******REMOVED***\n\n'***REMOVED***
-            # await response.write(f'data: {{"type": "log", "message": "处理中... 步骤 {step***REMOVED*** / {total_steps***REMOVED***"***REMOVED******REMOVED***\n\n'***REMOVED***
-            await response.write(f'data: {{"type": "log", "message": "{item["page_title"]***REMOVED***"***REMOVED******REMOVED***\n\n'***REMOVED***
+        for step, item in enumerate(meta_dict***REMOVED***:
+            await response.write(f'data: {{"type": "progress", "progress": {step*10***REMOVED***, "total": {total_steps***REMOVED******REMOVED******REMOVED***\n\n'***REMOVED***
+            await response.write(f'data: {{"type": "log", "message": "{"#### 模块: "+item["page_title"]***REMOVED***"***REMOVED******REMOVED***\n\n'***REMOVED***
 
-            # 使用 run_in_executor 在单独的线程中运行 extract_function
+            # 使用 run_in_executor 在单独的线程中运行 extract_function 避免阻塞主线程
             loop = asyncio.get_running_loop(***REMOVED***
             answer = await loop.run_in_executor(executor, extract_function, item["page_content"]***REMOVED***
-            think_content = re.search(r"<think>(.*?***REMOVED***</think>", answer, re.DOTALL***REMOVED***.group(1***REMOVED***
-            remaining_content = re.sub(r"<think>.*?</think>", "", answer, flags=re.DOTALL***REMOVED***.strip(***REMOVED***
-            await response.write(
-                "data:"
-                + json.dumps(
-                  ***REMOVED***"type": "log", "message": "思考过程:" + think_content***REMOVED***,
-                    ensure_ascii=False,
+            for index, func in enumerate(json.loads(answer***REMOVED******REMOVED***:
+                await response.write(
+                    "data:"
+                    + json.dumps(
+                      ***REMOVED***"type": "log", "message": f"- {func***REMOVED*** </br>"***REMOVED***,
+                        ensure_ascii=False,
+                    ***REMOVED***
+                    + "\n\n"
                 ***REMOVED***
-                + "\n\n"
-            ***REMOVED***
 
             await response.write(
                 "data:"
                 + json.dumps(
-                  ***REMOVED***"type": "log", "message": "功能点:" + remaining_content***REMOVED***,
+                  ***REMOVED***"type": "log", "message": "---"***REMOVED***,
                     ensure_ascii=False,
                 ***REMOVED***
                 + "\n\n"
             ***REMOVED***
-
         # 完成后发送完成标志
         await response.write('data: {"type": "complete"***REMOVED***\n\n'***REMOVED***
         await response.write("\n\n"***REMOVED***
@@ -283,10 +276,11 @@ result_format = """["功能点1","功能点2"]"""
 def build_prompt(doc_content***REMOVED*** -> str:
     """
     构建提示词
-     # system: 你是一个测试专家精通从需求文档内容中抽取具体功能点
+
     :return:
     """
     prompt_content = f"""
+    # system: 你是一个测试专家精通从需求文档内容中抽取具体功能点
     # 任务: 从需求文档内容中抽取具体功能点
     -----------
     # 需求文档内容: {doc_content***REMOVED***
@@ -296,7 +290,7 @@ def build_prompt(doc_content***REMOVED*** -> str:
     - 严格依据需求文档内容回答不要虚构
     - 每个功能点信息字数限制在30字以内
     - 根据需求文档内容尽量列举出所有功能点信息
-     确保只以JSON格式回答，具体格式如下:{result_format***REMOVED***
+    确保只以JSON格式回答，具体格式如下:{result_format***REMOVED***
     """
     return prompt_content
 
@@ -312,7 +306,7 @@ def extract_function(doc_content***REMOVED***:
     # 构建请求体
     payload = {
         "prompt": build_prompt(doc_content***REMOVED***,
-        "model": "deepseek-r1:7b",
+        "model": "qwen2.5",
         "stream": False,
         "think_output": False,
         "max_tokens": 40960,
@@ -325,7 +319,6 @@ def extract_function(doc_content***REMOVED***:
     headers = {"Content-Type": "application/json"***REMOVED***
 
     response = requests.post(url, data=json.dumps(payload***REMOVED***, headers=headers***REMOVED***
-
     if response.status_code == 200:
         # 解析响应中的结果
         result = response.text
