@@ -65,7 +65,9 @@
    
 2. **Dify配置**
    - 添加Dify大模型提供商Ollama,配置Qwen2.5模型和DeepSeek R1模型
-   - 导入项目根目录下的**docker/dify/数据问答_v1.1.1_deepseek.yml画布**至Dify并获取对应的api-key
+   - 导入项目根目录下的**docker/dify/数据问答_v1.1.1_deepseek.yml画布** 
+   - ***获取画布对应的api-key先复制出来下面步骤会使用***
+   - **导入画布后需要手动选择一下你本地配置的大模型并保存**
 
 ![image](./images/llm-setting.png***REMOVED***
 ![image](./images/llm-setting-deepseek.png***REMOVED***
@@ -85,7 +87,7 @@
 
 2. **启动服务**
    - 修改docker-compose里的chat-service服务DIFY_开头的环境变量
-   - 修改**DIFY_DATABASE_QA_API_KEY** 配置Dify画布的api-key
+   - 修改**DIFY_DATABASE_QA_API_KEY** 获取Dify画布的api-key
 
    ```bash
    # 拉起前后端服务和中间件
@@ -119,7 +121,7 @@
 ## 🛠️ **本地开发**
 - 第一步克隆代码到本地
 - 第二步参考上面**大模型部署**先安装Ollama部署Qwen2.5模型和DeepSeek R1模型
-- 第三步本地开发环境Dify配置，参考上面**Dify环境配置** **同时修改.env.dev文件里面的DIFY_DATABASE_QA_API_KEY**
+  - 第三步本地开发环境Dify配置，参考上面**Dify环境配置里 获取Dify画布的api-key ** **同时修改.env.dev文件里面的DIFY_DATABASE_QA_API_KEY**
 - 第四步本地开发环境Minio配置,修改env.dev文件里面的Minio相关密钥信息
 - 第五步安装前后端项目依赖并启动前后端服务具体步骤如下:
 
