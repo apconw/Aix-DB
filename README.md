@@ -10,11 +10,6 @@
 
 作为轻量级的大模型应用开发项目，Sanic-Web 🛠️ 支持快速迭代与扩展，助力大模型项目快速落地。🚀
 
-
-## 🤝赞助合作
-- **赞助支持** - 如搞不定部署或想快速进行二开 **请添加下面微信请我喝杯咖啡☕️，我将亲自远程帮您部署和启动，并讲解项目架构以及二开思路。**
-- **项目合作** - 如果您有大模型应用场景需求如：**知识库搭建、DeepSeek R1私有化部署等各种定制化需求，欢迎联系我。**
-
 ## 架构方案
 ![image](./images/app-01.png***REMOVED***
 
@@ -196,20 +191,22 @@
 
 ## 🌹 支持
 
-如果你喜欢这个项目或发现有用，可以点右上角 [`Star`](https://github.com/apconw/sanic-web***REMOVED*** 支持一下，你的支持是我们不断改进的动力，感谢！ ^_^ 
+如果你喜欢这个项目或发现有用，可以点右上角 [`Star`](https://github.com/apconw/sanic-web***REMOVED*** 支持一下，你的支持是我们不断改进的动力，感谢！ ^_^
 
-如果你觉得这个项目对你有帮助，或者你喜欢我们所做的事情，欢迎点击右上角的 [⭐️ Star] 按钮来支持我们！你的每一个星标都是对我们莫大的鼓励，也是我们不断改进和发展的动力。感谢你的支持！ ^_^
+## ⭐ Star History
+ [![Star History Chart](https://api.star-history.com/svg?repos=apconw/sanic-web&type=Date***REMOVED***](https://star-history.com/#apconw/sanic-web&Date***REMOVED***
 
-[![GitHub stars](https://img.shields.io/github/stars/yourusername/yourproject?style=social***REMOVED***](https://github.com/apconw/sanic-web***REMOVED***
 
-此外，如果你有任何建议或想参与项目的发展，也非常欢迎你通过以下方式联系我们：
+## 🐳 关于技术支持申明
+- 本软件基于开源技术构建，使用Dify、Ollama、Vue、大模型等开源项目。 技术上如有问题，可以先向对应的开源社区请求帮助。
+- 开源不易，本人精力和时间有限，如需一对一技术支持，请先赞助。联系微信(备注 技术支持***REMOVED***
+- 一对一技术支持 我将亲自远程帮您部署和启动、并讲解项目架构以及二开思路等.
+- 长期技术支持方式 拉你加入群(一线算法、架构大佬群***REMOVED***，为你提供技术指导，项目解决方案等。
 
-- **提交Issue** - 如果你发现了任何问题或有改进建议，可以在 [Issues](https://github.com/apconw/sanic-web/issues***REMOVED*** 中提交。
-- **加入讨论** - 可以添加加入我们讨论群，进行交流讨论。 参与讨论。
-- **贡献代码** - 如果你有兴趣贡献代码，可以参考 [贡献指南](#如何开始***REMOVED***。
-
-再次感谢你的支持！ 🙏
-
+| 技术支持方式                     | 赞助(元***REMOVED***  | 
+|:---------------------------|:------:|
+| 加 QQ：43397495，微信：weber812  | 18.8/次 |
+| 长期技术支持（不限次数，提供技术指导，项目解决方等） |  100   |                  
 
 
 ## QA交流群
