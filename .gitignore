@@ -16,5 +16,4 @@ web/.vscode/
 .venv/
 logs/
 # 环境变量文件
-.env.*
 .pytest_cache/

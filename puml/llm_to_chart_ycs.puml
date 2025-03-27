@@ -1,0 +1,24 @@
+@startuml
+actor User
+participant "前端" as FE
+participant "统计指标管理模块" as MetricManager
+participant "大模型匹配" as Matcher
+participant "大模型" as LLM
+participant "后端接口" as API
+participant "数据库" as DB
+
+User -> FE: 发起查询请求
+FE -> MetricManager: 维护统计指标 SQL
+User -> FE: 提出问题
+FE -> Matcher: 传递用户问题
+Matcher -> MetricManager: 查找匹配的统计指标SQL
+MetricManager -> Matcher: 返回匹配的统计指标SQL
+Matcher -> LLM: 传递匹配指标SQL和用户问题
+LLM -> LLM: 进行 SQL 填槽
+LLM -> API: 调用方法执行SQL
+API -> DB: 执行 SQL 查询
+DB -> API: 返回查询结果
+API -> FE: 返回查询结果
+FE -> FE: 根据数据类型动态渲染表格
+FE -> User: 显示渲染后的表格
+@enduml
