@@ -222,7 +222,7 @@ const scrollToBottomIfAtBottom = async (***REMOVED*** => {
  */
 const runReadBuffer = (readCallback = (***REMOVED*** => {***REMOVED***, endCallback = (***REMOVED*** => {***REMOVED******REMOVED*** => {
     if (textBuffer.value.length > 0***REMOVED*** {
-        const lengthToExtract = props.isInit ? 1000 : 1
+        const lengthToExtract = props.isInit ? 1000 : 4
         const nextChunk = textBuffer.value.substring(0, lengthToExtract***REMOVED***
         displayText.value += nextChunk
         textBuffer.value = textBuffer.value.substring(lengthToExtract***REMOVED***

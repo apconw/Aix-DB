@@ -705,7 +705,7 @@ const onBlurSearchChat = (***REMOVED*** => {
                         <div
                             class="create-chat-box"
                             :class="{
-                                'hide': isFocusSearchChat
+                                hide: isFocusSearchChat
                             ***REMOVED***"
               ***REMOVED***
                             <n-button
@@ -717,8 +717,7 @@ const onBlurSearchChat = (***REMOVED*** => {
                                 class="create-chat"
                   ***REMOVED***
                                 <template #icon>
-                                    <n-icon 
-                          ***REMOVED***
+                                    <n-icon>
                               ***REMOVED***class="i-hugeicons:add-01"></div>
                                     </n-icon>
                                 ***REMOVED***
@@ -1147,8 +1146,8 @@ const onBlurSearchChat = (***REMOVED*** => {
                                 style="
                                   ***REMOVED***
                                     gap: 10px;
+                                    height: 40px;
                                     margin-left: 10%;
-                                    margin-bottom: 5px;
                                 "
                   ***REMOVED***
                                 <n-button
@@ -1159,15 +1158,15 @@ const onBlurSearchChat = (***REMOVED*** => {
                                     @click="onAqtiveChange('COMMON_QA'***REMOVED***"
                                     style="
                                         border-radius: 100px;
-                                        width: 100px;
+                                        width: 120px;
+                                        height: 36px;
                                         padding: 15px;
-                                        height: 20px;
-                                        font-size: 12px;
+                                        font-size: 13px;
                                         color: #585a73;
                                     "
                       ***REMOVED***
                                     <template #icon>
-                                        <n-icon size="14">
+                                        <n-icon size="16">
                                             <svg
                                                 t="1742194713465"
                                                 class="icon"
@@ -1196,15 +1195,15 @@ const onBlurSearchChat = (***REMOVED*** => {
                                     @click="onAqtiveChange('DATABASE_QA'***REMOVED***"
                                     style="
                                         border-radius: 100px;
-                                        width: 100px;
+                                        width: 120px;
+                                        height: 36px;
                                         padding: 15px;
-                                        height: 20px;
-                                        font-size: 12px;
+                                        font-size: 13px;
                                         color: #585a73;
                                     "
                       ***REMOVED***
                                     <template #icon>
-                                        <n-icon>
+                                        <n-icon size="20">
                                             <svg
                                                 t="1732505379377"
                                                 class="icon"
@@ -1233,15 +1232,15 @@ const onBlurSearchChat = (***REMOVED*** => {
                                     @click="onAqtiveChange('FILEDATA_QA'***REMOVED***"
                                     style="
                                         border-radius: 100px;
-                                        width: 100px;
+                                        width: 120px;
+                                        height: 36px;
                                         padding: 15px;
-                                        height: 20px;
-                                        font-size: 12px;
+                                        font-size: 13px;
                                         color: #585a73;
                                     "
                       ***REMOVED***
                                     <template #icon>
-                                        <n-icon>
+                                        <n-icon size="20">
                                             <svg
                                                 t="1732505460059"
                                                 class="icon"
@@ -1275,15 +1274,15 @@ const onBlurSearchChat = (***REMOVED*** => {
                                     @click="onAqtiveChange('REPORT_QA'***REMOVED***"
                                     style="
                                         border-radius: 100px;
-                                        width: 100px;
+                                        width: 120px;
+                                        height: 36px;
                                         padding: 15px;
-                                        height: 20px;
-                                        font-size: 12px;
+                                        font-size: 13px;
                                         color: #585a73;
                                     "
                       ***REMOVED***
                                     <template #icon>
-                                        <n-icon>
+                                        <n-icon size="18">
                                             <svg
                                                 t="1732528323504"
                                                 class="icon"
@@ -1408,7 +1407,7 @@ const onBlurSearchChat = (***REMOVED*** => {
                 ***REMOVED***
                             <n-float-button
                                 position="absolute"
-                                top="58%"
+                                top="60%"
                                 right="11.5%"
                                 :type="stylizingLoading ? 'primary' : 'default'"
                                 color
@@ -1437,11 +1436,10 @@ const onBlurSearchChat = (***REMOVED*** => {
 ***REMOVED***
 
 <style lang="scss" scoped>
-
 .create-chat-box {
     width: 168px;
     overflow: hidden;
-    transition: all .3s;
+    transition: all 0.3s;
   ***REMOVED***
     &.hide {
         width: 0;

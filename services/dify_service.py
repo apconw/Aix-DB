@@ -119,7 +119,6 @@ class DiFyRequest:
                                             if data_type == DataTypeEnum.ANSWER.value[0]:
                                                 await self.send_message(
                                                     res,
-                                                    answer,
                                                   ***REMOVED***"data": {"messageType": "begin"***REMOVED***, "dataType": data_type***REMOVED***,
                                                 ***REMOVED***
                                         elif event_list[1] == "1":
@@ -128,7 +127,6 @@ class DiFyRequest:
                                             if data_type == DataTypeEnum.ANSWER.value[0]:
                                                 await self.send_message(
                                                     res,
-                                                    answer,
                                                   ***REMOVED***"data": {"messageType": "end"***REMOVED***, "dataType": data_type***REMOVED***,
                                                 ***REMOVED***
 
@@ -137,7 +135,6 @@ class DiFyRequest:
                                                 res_data = process(json.loads(bus_data***REMOVED***["data"]***REMOVED***
                                                 await self.send_message(
                                                     res,
-                                                    answer,
                                                   ***REMOVED***"data": res_data, "dataType": data_type***REMOVED***,
                                                 ***REMOVED***
                                                 t04_answer_data = {"data": res_data, "dataType": data_type***REMOVED***
@@ -149,7 +146,6 @@ class DiFyRequest:
                                         if data_type == DataTypeEnum.ANSWER.value[0]:
                                             await self.send_message(
                                                 res,
-                                                answer,
                                               ***REMOVED***"data": {"messageType": "continue", "content": answer***REMOVED***, "dataType": data_type***REMOVED***,
                                             ***REMOVED***
 
@@ -180,7 +176,6 @@ class DiFyRequest:
                                         "data": {"messageType": "continue", "content": "".join(t02_answer_data***REMOVED******REMOVED***,
                                         "dataType": DataTypeEnum.ANSWER.value[0],
                                     ***REMOVED***
-                                    print(t02_message_json***REMOVED***
 
                                     if t02_message_json:
                                         await self._save_message(t02_message_json, qa_context, conversation_id, message_id, task_id, qa_type***REMOVED***
@@ -196,39 +191,6 @@ class DiFyRequest:
         ***REMOVED***"error": str(e***REMOVED******REMOVED***  # 返回错误信息作为字典
         finally:
             await self.res_end(res***REMOVED***
-
-    @staticmethod
-    async def handle_think_tag(answer***REMOVED***:
-        """
-        处理<think>标签内的内容
-        :param answer
-        """
-        """
-        处理<think>标签内的内容，或JSON格式的thoughts字段
-        :param answer
-        """
-        think_content = ""
-        remaining_content = answer
-
-        # 会遇到answer可能不能解析到，先尝试解析为JSON
-        try:
-            data = json.loads(answer***REMOVED***
-            if isinstance(data, dict***REMOVED*** and "thoughts" in data:
-                think_content = data["thoughts"]
-                remaining_content = answer
-                return think_content, remaining_content
-        except Exception:
-            pass
-
-        # 再尝试正则提取<think>标签
-        match = re.search(r"<think>(.*?***REMOVED***</think>", answer, re.DOTALL***REMOVED***
-        if match:
-            think_content = match.group(1***REMOVED***
-            remaining_content = re.sub(r"<think>.*?</think>", "", answer, flags=re.DOTALL***REMOVED***.strip(***REMOVED***
-            return think_content, remaining_content
-
-        # 如果都没有，返回空
-        return "", answer
 
     @staticmethod
     async def _save_message(message, qa_context, conversation_id, message_id, task_id, qa_type***REMOVED***:
@@ -252,22 +214,12 @@ class DiFyRequest:
                 qa_context.token, conversation_id, message_id, task_id, qa_context.chat_id, qa_context.question, "", message, qa_type
             ***REMOVED***
 
-    async def send_message(self, response, answer, message***REMOVED***:
+    @staticmethod
+    async def send_message(response, message***REMOVED***:
         """
         SSE 格式发送数据，每一行以 data: 开头
-        """
-        if answer.lstrip(***REMOVED***.startswith("<think>"***REMOVED***:
-            # 处理deepseek模型思考过程样式
-            think_content, remaining_content = await self.handle_think_tag(answer***REMOVED***
-
-            # 发送<think>标签内的内容
-            message = {
-                "data": {"messageType": "continue", "content": "> " + think_content.replace("\n", ""***REMOVED*** + "\n\n" + remaining_content***REMOVED***,
-                "dataType": "t02",
-            ***REMOVED***
-            await response.write("data:" + json.dumps(message, ensure_ascii=False***REMOVED*** + "\n\n"***REMOVED***
-        else:
-            await response.write("data:" + json.dumps(message, ensure_ascii=False***REMOVED*** + "\n\n"***REMOVED***
+        #"""
+        await response.write("data:" + json.dumps(message, ensure_ascii=False***REMOVED*** + "\n\n"***REMOVED***
 
     @staticmethod
     async def res_begin(res, chat_id***REMOVED***:
