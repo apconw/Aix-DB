@@ -17,7 +17,8 @@ const columns = ref([
     ***REMOVED***,
   ***REMOVED***
         title: '用户问题',
-        key: 'question'
+        key: 'question',
+        ellipsis: true
     ***REMOVED***,
   ***REMOVED***
         title: '创建时间',

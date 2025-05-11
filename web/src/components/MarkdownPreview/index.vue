@@ -690,6 +690,7 @@ const onChartCompletedReader = function (***REMOVED*** {
         font-weight: bolder;
         text-decoration: underline;
         padding: 0 3px;
+    ***REMOVED*** // 让 a 标签作为块级元素，实现换行
     ***REMOVED***
 
     p {
@@ -737,6 +738,33 @@ const onChartCompletedReader = function (***REMOVED*** {
     code {
       ***REMOVED***
         color: #333;
+    ***REMOVED***
+    // 为代码块添加样式
+    .markdown-code-wrapper {
+        max-width: 870px; /* 继承父容器宽度 */
+      ***REMOVED***
+        box-sizing: border-box;
+      ***REMOVED***
+        word-break: break-word; /* 增加断词规则 */
+    ***REMOVED***
+    /* 覆盖pre标签默认样式 */
+    pre {
+      ***REMOVED***
+        max-width: 100%;
+      ***REMOVED***
+        word-wrap: break-word;
+    ***REMOVED***
+
+    /* 添加图片样式，约束宽度 */
+    img {
+        max-width: 100%;
+        height: auto;
+    ***REMOVED*** // 将图片转为块级元素
+        margin-left: auto; // 左外边距自动
+        margin-right: auto; // 右外边距自动
+        max-width: 100%; // 最大宽度为容器宽度
+        // height: auto; // 高度自适应
+        max-height: 500px;
     ***REMOVED***
 
     .active-tab {

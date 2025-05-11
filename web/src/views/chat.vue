@@ -893,8 +893,21 @@ const handleClear = (***REMOVED*** => {
                                         :bordered="false"
                                         :round="true"
                                         :style="{
-                                            fontSize: '14px',
-                                            fontFamily: 'PMingLiU'
+                                            fontSize: '15px',
+                                            fontFamily: 'PMingLiU !important',
+                                            color: '#26244c',
+                                            'max-width': '900px',
+                                            'text-align': 'left',
+                                            padding: '5px 18px',
+                                            height: 'auto',
+                                            // 允许长单词换行到下一行
+                                            'word-wrap': 'break-word',
+                                            // 允许在单词内换行
+                                            'word-break': 'break-all',
+                                            // 移除默认的 white-space 属性，确保文本能正常换行
+                                            'white-space': 'normal',
+                                            // 强制应用样式
+                                            overflow: 'visible !important'
                                         ***REMOVED***"
                                         :color="{
                                             color: '#e0dfff',
