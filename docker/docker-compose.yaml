@@ -4,6 +4,8 @@ services:
   chat-web:
     image: apconw/chat-vue3-mvp:1.1.3
     container_name: chat-vue3-mvp
+    environment:
+      - TZ=Asia/Shanghai
     ports:
       - "8081:80"
     extra_hosts:
@@ -12,7 +14,7 @@ services:
       - chat-service
 
   minio:
-    image: minio/minio:latest
+    image: minio/minio:RELEASE.2025-04-22T22-12-26Z
     container_name: minio
     ports:
       - "19000:9000"
@@ -34,6 +36,7 @@ services:
       - MINIO_ENDPOINT=host.docker.internal:19000
       - MINIO_ACCESS_KEY=sIR5eeDkiwoo779yNJbw
       - MiNIO_SECRET_KEY=MreuQ3aC1ymHJeo3QfzSg7aPz7PqlxeOw39nZUdE
+      - TZ=Asia/Shanghai
     ports:
       - "8088:8088"
     extra_hosts:

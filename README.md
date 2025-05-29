@@ -50,7 +50,7 @@
 - **内存**：8GB+
 
 ## 🔧 **前置条件**
-* Python 3.8+
+* Python 3.11.x
 * Poetry 1.8.3+
 * Dify 0.7.1+
 * Mysql 8.0+
