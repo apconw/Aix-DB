@@ -796,7 +796,14 @@ const onChartCompletedReader = function (***REMOVED*** {
     border-color: #635eed;
     color: #635eed;
   ***REMOVED***
+  // 为代码块添加样式
 
+  .markdown-code-wrapper {
+    max-width: 100%; // 指定最大宽度，可按需调整
+    margin-left: auto;
+    margin-right: auto;
+  ***REMOVED*** // 当代码超出最大宽度时显示水平滚动条
+  ***REMOVED***
   // think {
   //     color: #635eed;
   // ***REMOVED***
