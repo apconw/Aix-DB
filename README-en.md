@@ -13,7 +13,7 @@ This is a one - stop large model application development project built on techno
 As a lightweight large model application development project, Sanic - Web 🛠️ supports rapid iteration and expansion, facilitating the quick implementation of large model projects. 🚀
 
 ## Architecture Diagram
-![image](./images/app-01.png***REMOVED***
+![image](./docker/images/app-01.png***REMOVED***
 
 ## 🎉 **Features**
 - **Core Technology Stack**: Dify + Ollama + RAG + (Qwen2.5/DeepSeek***REMOVED*** + Text2SQL
@@ -25,10 +25,10 @@ As a lightweight large model application development project, Sanic - Web 🛠�
 - **Flexible Deployment**: Supports one - click deployment of all dependent components for large model application development using docker - compose, with zero configuration required.
 
 ## Demo
-![image](./images/chat-04.gif***REMOVED***
-![image](./images/chat-05.png***REMOVED***
-![image](./images/chat-01.png***REMOVED***
-![image](./images/chat-02.png***REMOVED***
+![image](./docker/images/chat-04.gif***REMOVED***
+![image](./docker/images/chat-05.png***REMOVED***
+![image](./docker/images/chat-01.png***REMOVED***
+![image](./docker/images/chat-02.png***REMOVED***
 
 ## 💡 Environment Requirements
 
@@ -68,10 +68,10 @@ Before you start, make sure your development environment meets the following min
 - Copy the API key corresponding to the canvas for use in the following steps.
 - After importing the canvas, manually select the locally configured large model and save the settings.
   
-![image](./images/llm-setting.png***REMOVED***
-![image](./images/llm-setting-deepseek.png***REMOVED***
-![image](./images/import-convas.png***REMOVED***
-![image](./images/convas-api-key.png***REMOVED***
+![image](./docker/images/llm-setting.png***REMOVED***
+![image](./docker/images/llm-setting-deepseek.png***REMOVED***
+![image](./docker/images/import-convas.png***REMOVED***
+![image](./docker/images/convas-api-key.png***REMOVED***
 
 ## 🚀 Quick Start
 The specific steps are as follows:
@@ -111,7 +111,7 @@ pip install pymysql
 
 # For Mac or Linux users
 cd docker
-./init.sh
+./docker/init.sh
 
 # For Windows users
 cd common
@@ -157,7 +157,7 @@ docker compose up -d mysql minio
 ```bash
 # For Mac or Linux users
 cd docker
-./init.sh
+./docker/init.sh
 
 # For Windows users
 cd common
@@ -214,7 +214,7 @@ If you find this project useful, please give it a star on GitHub by clicking the
 
 |               微信群                |
 | :---------------------------------: |
-| ![image](./images/wchat-search.png***REMOVED*** |
+| ![image](./docker/images/wchat-search.png***REMOVED*** |
 
 
 ## License

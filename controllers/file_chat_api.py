@@ -1,12 +1,11 @@
 import logging
-from urllib.parse import unquote
-from sanic import Blueprint, Request
 
 from common.exception import MyException
 from common.minio_util import MinioUtils
 from common.res_decorator import async_json_resp
 from constants.code_enum import SysCodeEnum
-from services.pandas_ai_service import read_excel, query_excel, read_file_columns
+from sanic import Blueprint, Request
+from services.file_chat_service import read_excel, read_file_columns
 from services.text2_sql_service import exe_file_sql_query
 
 bp = Blueprint("fileChatApi", url_prefix="/file"***REMOVED***
@@ -52,32 +51,6 @@ async def read_file_column(req: Request***REMOVED***:
     file_url = minio_utils.get_file_url_by_key(object_key=file_key***REMOVED***
     result = await read_file_columns(file_url***REMOVED***
     return result
-
-
-@bp.get("/query_excel"***REMOVED***
-@async_json_resp
-async def process_query(req: Request***REMOVED***:
-    """
-     通过object_key获取文件url
-    :param req:
-    :return:
-    """
-    query_str = unquote(req.query_string***REMOVED***
-    if not query_str:
-        return None
-
-    try:
-        str_split = query_str.replace("&", ""***REMOVED***.replace("=", ""***REMOVED***.split("@@@@"***REMOVED***
-        query_text = str_split[0]
-        file_key = str_split[1]
-        file_url = minio_utils.get_file_url_by_key(object_key=file_key***REMOVED***
-
-        result = await query_excel(file_url, query_text***REMOVED***
-        return result
-    except IndexError:
-        raise ValueError("Invalid query string format"***REMOVED***
-    except Exception as e:
-        raise RuntimeError(f"An error occurred: {e***REMOVED***"***REMOVED***
 
 
 @bp.post("/upload_file"***REMOVED***

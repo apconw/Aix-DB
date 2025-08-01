@@ -37,13 +37,13 @@ https://github.com/user-attachments/assets/923758a3-4879-4836-852b-691413da372e
 
 |               微信               |
 |:------------------------------:| 
-| ![image](./src/images/img.png***REMOVED*** | 
+| ![image](./docker/images/img.png***REMOVED*** | 
 
 
 
 
 ## 架构方案
-![image](./src/images/app-01.png***REMOVED***
+![image](./docker/images/app-01.png***REMOVED***
 
 ## 🎉 **特性**
 - **核心技术栈**：Dify + Ollama + RAG + (Qwen2.5/DeepSeek***REMOVED*** + Text2SQL
@@ -55,10 +55,10 @@ https://github.com/user-attachments/assets/923758a3-4879-4836-852b-691413da372e
 - **灵活部署**：支持大模型应用开发各依赖组件docker-compose一键拉起快速部署零配置
 
 ## 运行效果
-![image](./src/images/chat-04.gif***REMOVED***
-![image](./src/images/chat-05.png***REMOVED***
-![image](./src/images/chat-01.png***REMOVED***
-![image](./src/images/chat-02.png***REMOVED***
+![image](./docker/images/chat-04.gif***REMOVED***
+![image](./docker/images/chat-05.png***REMOVED***
+![image](./docker/images/chat-01.png***REMOVED***
+![image](./docker/images/chat-02.png***REMOVED***
 
 
 ## 💡环境配置要求
@@ -91,19 +91,19 @@ https://github.com/user-attachments/assets/923758a3-4879-4836-852b-691413da372e
    - Dify本机访问地址：http://localhost:18000 账号/密码: 需自己注册 
    ```bash
    # 拉起内置的dify服务
-   cd src/docker/dify/docker
+   cd docker/docker/dify/docker
    docker-compose up -d
    
 2. **Dify配置**
    - 添加Dify大模型提供商Ollama,配置Qwen2.5模型和DeepSeek R1模型
-   - 导入项目根目录下的**src/docker/dify/数据问答_v1.1.4_deepseek.yml画布** 
+   - 导入项目根目录下的**docker/docker/dify/数据问答_v1.1.4_deepseek.yml画布** 
    - 获取画布对应的api-key先复制出来下面步骤会使用
    - 导入画布后需要手动选择一下你本地配置的大模型并保存
 
-![image](./src/images/llm-setting.png***REMOVED***
-![image](./src/images/llm-setting-deepseek.png***REMOVED***
-![image](./src/images/import-convas.png***REMOVED***
-![image](./src/images/convas-api-key.png***REMOVED***
+![image](./docker/images/llm-setting.png***REMOVED***
+![image](./docker/images/llm-setting-deepseek.png***REMOVED***
+![image](./docker/images/import-convas.png***REMOVED***
+![image](./docker/images/convas-api-key.png***REMOVED***
    
 ## 🚀 **快速体验**
    - 具体步骤如下：
@@ -122,7 +122,7 @@ https://github.com/user-attachments/assets/923758a3-4879-4836-852b-691413da372e
 
    ```bash
    # 拉起前后端服务和中间件
-   cd /src/docker
+   cd /docker/docker
    docker compose up -d
    
 3. **Minio配置**
@@ -132,7 +132,7 @@ https://github.com/user-attachments/assets/923758a3-4879-4836-852b-691413da372e
 
    ```bash
    # 重新拉起前后端服务和中间件
-   cd /src/docker
+   cd /docker/docker
    docker compose up -d
 
 4. **数据初始化**
@@ -143,12 +143,12 @@ https://github.com/user-attachments/assets/923758a3-4879-4836-852b-691413da372e
    
    # Mac or Linux 用户执行
    
-   cd /src/docker
+   cd /docker/docker
    ./init_data.sh
    
    # Windows 用户执行
    
-   cd /src/common
+   cd /docker/common
    python initialize_mysql.py
    
    
@@ -194,14 +194,14 @@ https://github.com/user-attachments/assets/923758a3-4879-4836-852b-691413da372e
    File -> Settings -> Project: sanic-web -> Project Interpreter -> Add -> Existing environment
    选择.venv目录
    
-   # pycharm 选择src目录为项目根目录
+   # pycharm 选择docker目录为项目根目录
    File -> Settings -> Project: sanic-web -> Project Structure -> Sources
-   选择src目录
+   选择docker目录
 
 
 2. **安装中间件**
    ```bash
-   cd src/docker
+   cd docker/docker
    docker compose up -d mysql minio
    
 3. **Minio配置**
@@ -213,12 +213,12 @@ https://github.com/user-attachments/assets/923758a3-4879-4836-852b-691413da372e
    - 如果使用本地环境mysql,初始化数据时需修改源码initialize_mysql，修改数据库连接信息即可
    ```bash
     # Mac or Linux 用户执行
-     cd src/docker
+     cd docker/docker
      ./init_data.sh
       
     # Windows 用户执行
       
-     cd src/common
+     cd docker/common
      python initialize_mysql.py
 
 5. **前端依赖安装**  
@@ -269,7 +269,7 @@ https://github.com/user-attachments/assets/923758a3-4879-4836-852b-691413da372e
 
 |                   微信群                   |
 |:---------------------------------------:|
-| ![image](./src/images/wchat-search.png***REMOVED*** | 
+| ![image](./docker/images/wchat-search.png***REMOVED*** | 
 
 ## License
 

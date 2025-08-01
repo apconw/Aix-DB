@@ -3,7 +3,7 @@ name = "app"
 version = "0.1.0"
 description = ""
 authors = [
-  ***REMOVED*** name = "lihuan", email = "343397495@qq.com" ***REMOVED***
+  ***REMOVED*** name = "weber_001", email = "343397495@qq.com" ***REMOVED***
 ]
 readme = "README.md"
 requires-python = ">=3.10,<3.12"
@@ -27,10 +27,8 @@ dependencies = [
     "ollama>=0.3.1,<0.4.0",
     "langchain-community>=0.2.12,<0.3.0",
     "python-dotenv>=1.0.1,<2.0.0",
-    "pandasai>=2.2.15,<3.0.0",
     "minio>=7.2.8,<8.0.0",
     "pyjwt>=2.9.0,<3.0.0",
-    "selenium>=4.26.0,<5.0.0",
     "bs4>=0.0.2,<0.1.0",
     "sanic-ext>=23.12.0,<24.0.0",
     "mammoth>=1.9.0,<2.0.0",
@@ -38,26 +36,7 @@ dependencies = [
     "pymupdf>=1.25.2,<2.0.0",
     "beautifulsoup4>=4.13.3,<5.0.0",
     "lxml>=5.3.1,<6.0.0",
-    "selenium-stealth>=1.0.6,<2.0.0",
     "pymysql>=1.1.1",
     "mcp>=1.12.2",
     "openai>=1.97.0",
 ]
-
-[project.urls]
-homepage = "https://example.com"
-
-#[[project.source]]
-#name = "tsinghua"
-#url = "https://pypi.tuna.tsinghua.edu.cn/simple/"
-#priority = "primary"
-
-[build-system]
-requires = ["setuptools<81"]
-build-backend = "setuptools.build_meta:__legacy__"
-
-# 格式化代码插件
-[tool.black]
-line-length = 88
-include = '\.pyi?$'
-exclude = '''/(\.git|\.hg|\.mypy_cache|\.tox|\.venv|_build|buck-out|build|dist***REMOVED***/'''

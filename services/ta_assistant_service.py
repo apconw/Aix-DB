@@ -23,6 +23,11 @@ from constants.code_enum import SysCodeEnum
 
 logger = logging.getLogger(__name__***REMOVED***
 
+"""
+测试助手服务类
+目前未使用
+"""
+
 
 def convert_img(image***REMOVED***:
     """
@@ -153,7 +158,9 @@ async def insert_demand_doc_meta(user_id, demand_id, file_key***REMOVED*** -> bo
     """
     try:
         outline_with_content = WordUtil(***REMOVED***.read_target_content(file_key***REMOVED***
-        outline_dict_list = [{"功能模块": heading, "功能点详息说明": [f"***REMOVED***line***REMOVED***" for line in content]***REMOVED*** for heading, content in outline_with_content]
+        outline_dict_list = [
+          ***REMOVED***"功能模块": heading, "功能点详息说明": [f"***REMOVED***line***REMOVED***" for line in content]***REMOVED*** for heading, content in outline_with_content
+    ***REMOVED***
 
         for outline_dict in outline_dict_list:
             page_title = outline_dict["功能模块"]
@@ -327,7 +334,9 @@ def insert_demand_case(doc_id, function_array***REMOVED***:
     values_to_insert = []
     for item in function_array:
         for fun_name in item["fun_names"]:
-            values_to_insert.append((doc_id, item["section_id"], item["section_name"], fun_name, datetime.now(***REMOVED***, datetime.now(***REMOVED******REMOVED******REMOVED***
+            values_to_insert.append(
+                (doc_id, item["section_id"], item["section_name"], fun_name, datetime.now(***REMOVED***, datetime.now(***REMOVED******REMOVED***
+            ***REMOVED***
 
     mysql_client.batch_insert(insert_query, values_to_insert***REMOVED***
 

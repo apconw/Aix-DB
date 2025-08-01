@@ -1,12 +1,10 @@
 import io
 import json
 import logging
-import re
 
 import duckdb
 import pandas as pd
 import requests
-
 from common.date_util import DateEncoder
 from common.exception import MyException
 from common.minio_util import MinioUtils
@@ -47,26 +45,6 @@ async def exe_sql_query(model_out_str***REMOVED***:
     else:
         logger.error("数据应答大模型返回结果为空"***REMOVED***
         raise MyException(SysCode.c_9999***REMOVED***
-
-
-if __name__ == "__main__":
-    # json_str = """
-    # ```json
-    #   ***REMOVED***
-    #       "thoughts": "用户需要查询诈骗金额最高的前十条数据。通过对'涉案资金'字段进行排序和取前十名，可以满足需求。",
-    #       "sql": "SELECT TOP 10 ROUND(CAST(`涉案资金` AS INT***REMOVED***, 0***REMOVED*** AS 诈骗金额, `报警人姓名`, `性别`, `年龄`, `文化程度`, `受害人职业`, `手机品牌` FROM view_alarm_detail ORDER BY `涉案资金` DESC",
-    #       "type": "response_table",
-    #       "status": "0"
-    #     ***REMOVED***
-    # ```
-    # """
-    json_str = '```json\n{"name": "John", "age": 30, "city": "New York"***REMOVED***\n```'
-
-    # 去掉 ```json 前缀和后缀
-    json_str_cleaned = json_str.strip("```json\n"***REMOVED***.strip("\n```"***REMOVED***
-
-    # 解析 JSON 字符串
-    data = json.loads(json_str_cleaned***REMOVED***
 
 
 async def exe_file_sql_query(file_key, model_out_str***REMOVED***:
@@ -124,7 +102,9 @@ async def exe_file_sql_query(file_key, model_out_str***REMOVED***:
         # 构建结果字典
         result = [dict(zip(columns, row***REMOVED******REMOVED*** for row in rows]
 
-        return json.dumps({"llm": model_out_json, "data": {"column": columns, "result": result***REMOVED******REMOVED***, ensure_ascii=False, cls=DateEncoder***REMOVED***
+        return json.dumps(
+          ***REMOVED***"llm": model_out_json, "data": {"column": columns, "result": result***REMOVED******REMOVED***, ensure_ascii=False, cls=DateEncoder
+        ***REMOVED***
 
     except Exception as e:
         logger.error(f"文件问答处理失败: {model_out_str***REMOVED***, Error: {e***REMOVED***"***REMOVED***
