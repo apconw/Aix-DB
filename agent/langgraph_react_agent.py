@@ -28,7 +28,7 @@ class LangGraphReactAgent:
 
         self.llm = init_chat_model(
             model=os.getenv("MODEL_NAME"),
-            temperature=float(os.getenv("MODEL_TEMPERATURE", 0.5)),
+            temperature=float(os.getenv("MODEL_TEMPERATURE", 0.75)),
             base_url=os.getenv("MODEL_BASE_URL", "https://dashscope.aliyuncs.com/compatible-mode/v1"),
             api_key=os.getenv("MODEL_API_KEY"),
         )
@@ -79,19 +79,19 @@ class LangGraphReactAgent:
     def short_trim_messages(state):
         """
         模型调用前的消息清理的钩子函数
-        短期记忆：限制模型调用前的消息数量，只保留最近的4条消息
-        :param state:
-        :return:
+        短期记忆：限制模型调用前的消息数量，只保留最近的若干条消息
+        :param state: 状态对象，包含对话消息
+        :return: 修剪后的消息列表
         """
         trimmed_messages = trim_messages(
             messages=state["messages"],
-            max_tokens=10,  # 限制10条消息
-            token_counter=len,  # 使用自定义的token计数器，这里简单使用消息数量
-            strategy="last",  # 选择最早的消息进行删除
+            max_tokens=20000,  # 设置更合理的token限制（根据模型上下文窗口调整）
+            token_counter=lambda messages: sum(len(msg.content or "") for msg in messages),  # 更准确的token计算方式
+            strategy="last",  # 保留最新的消息
             allow_partial=False,
-            start_on="ai",
-            include_system=True,
-            text_splitter=False,
+            start_on="human",  # 确保从人类消息开始
+            include_system=True,  # 包含系统消息
+            text_splitter=None,  # 不使用文本分割器
         )
         return {"llm_input_messages": trimmed_messages}
 
