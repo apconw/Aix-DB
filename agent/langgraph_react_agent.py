@@ -9,6 +9,7 @@ from langchain_mcp_adapters.client import MultiServerMCPClient
 from langchain_openai import ChatOpenAI
 from langgraph.checkpoint.memory import InMemorySaver
 from langgraph.prebuilt import create_react_agent
+from langchain.chat_models import init_chat_model
 
 from constants.code_enum import DataTypeEnum
 from services.user_service import add_user_record
@@ -26,20 +27,26 @@ class LangGraphReactAgent:
             if not os.getenv(var):
                 raise ValueError(f"Missing required environment variable: {var}")
 
-        self.llm = ChatOpenAI(
-            model=os.getenv("MODEL_NAME", "qwen-plus"),
+        # self.llm = ChatOpenAI(
+        #     model=os.getenv("MODEL_NAME", "qwen-plus"),
+        #     temperature=float(os.getenv("MODEL_TEMPERATURE", 0.75)),
+        #     base_url=os.getenv("MODEL_BASE_URL", "https://dashscope.aliyuncs.com/compatible-mode/v1"),
+        #     api_key=os.getenv("MODEL_API_KEY"),
+        #     # max_tokens=int(os.getenv("MAX_TOKENS", 20000)),
+        #     top_p=float(os.getenv("TOP_P", 0.8)),
+        #     frequency_penalty=float(os.getenv("FREQUENCY_PENALTY", 0.0)),
+        #     presence_penalty=float(os.getenv("PRESENCE_PENALTY", 0.0)),
+        #     timeout=float(os.getenv("REQUEST_TIMEOUT", 30.0)),
+        #     max_retries=int(os.getenv("MAX_RETRIES", 3)),
+        #     streaming=os.getenv("STREAMING", "True").lower() == "true",
+        #     # 将额外参数通过 extra_body 传递
+        #     extra_body={},
+        # )
+        self.llm = init_chat_model(
+            model=os.getenv("MODEL_NAME"),
             temperature=float(os.getenv("MODEL_TEMPERATURE", 0.75)),
             base_url=os.getenv("MODEL_BASE_URL", "https://dashscope.aliyuncs.com/compatible-mode/v1"),
             api_key=os.getenv("MODEL_API_KEY"),
-            # max_tokens=int(os.getenv("MAX_TOKENS", 20000)),
-            top_p=float(os.getenv("TOP_P", 0.8)),
-            frequency_penalty=float(os.getenv("FREQUENCY_PENALTY", 0.0)),
-            presence_penalty=float(os.getenv("PRESENCE_PENALTY", 0.0)),
-            timeout=float(os.getenv("REQUEST_TIMEOUT", 30.0)),
-            max_retries=int(os.getenv("MAX_RETRIES", 3)),
-            streaming=os.getenv("STREAMING", "True").lower() == "true",
-            # 将额外参数通过 extra_body 传递
-            extra_body={},
         )
 
         # 使用 os.path 构建路径
