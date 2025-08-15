@@ -2,7 +2,8 @@ version: '3.8'
 
 services:
   chat-web:
-    image: apconw/chat-vue3-mvp:1.1.5
+#    image: apconw/chat-vue3-mvp:1.1.5
+    image: crpi-7xkxsdc0iki61l0q.cn-hangzhou.personal.cr.aliyuncs.com/apconw/chat-vue3-mvp:1.1.5
     container_name: chat-vue3-mvp
     environment:
       - TZ=Asia/Shanghai
@@ -27,7 +28,8 @@ services:
     command: server /data --console-address ":9001"
 
   chat-service:
-    image: apconw/sanic-web:1.1.5
+#    image: apconw/sanic-web:1.1.5
+    image: crpi-7xkxsdc0iki61l0q.cn-hangzhou.personal.cr.aliyuncs.com/apconw/sanic-web:1.1.5
     container_name: sanic-web
     environment:
       - ENV=test
