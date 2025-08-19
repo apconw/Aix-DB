@@ -32,7 +32,11 @@ services:
     image: crpi-7xkxsdc0iki61l0q.cn-hangzhou.personal.cr.aliyuncs.com/apconw/sanic-web:1.1.5
     container_name: sanic-web
     environment:
-      - ENV=test
+      - MYSQL_HOST=host.docker.internal
+      - MYSQL_PORT=13006
+      - MYSQL_USER=root
+      - MYSQL_PASSWORD=1
+      - MYSQL_DATABASE=chat_db
       - DIFY_SERVER_URL=http://host.docker.internal:18000
       - DIFY_DATABASE_QA_API_KEY=app-GIz9dM9GPUXVZOkDRaC0TOxh
       - MINIO_ENDPOINT=host.docker.internal:19000
