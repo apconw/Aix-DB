@@ -1,5 +1,6 @@
 import datetime
 import traceback
+from typing import Any, Dict, List
 
 import pymysql
 from mcp.server.fastmcp import FastMCP
@@ -7,14 +8,24 @@ from mcp.server.fastmcp import FastMCP
 mcp = FastMCP("query_qa_record")
 
 
-@mcp.tool(name="query_qa_record")
-async def query_qa_record(chat_id: str):
+"""
+根据聊天ID查询用户的问答记录mcp版本
+
+mcp装饰器会自动生成参数schema定义
+args_schema={'properties': {'chat_id': {'title': 'Chat Id', 'type': 'string'}}, 'required': ['chat_id'], 'title': 'query_qa_recordArguments', 'type': 'object'}
+"""
+
+
+@mcp.tool(
+    name="query_qa_record",
+    description="根据聊天ID查询用户的问答记录",
+)
+async def query_qa_record(chat_id: str) -> List[Dict[str, Any]]:
     """
     查询用户问答记录
     """
     try:
         sql = f"select * from t_user_qa_record where chat_id='{chat_id}' order by id desc limit 1"
-        print(sql)
         conn = pymysql.connect(
             host="localhost",
             port=13006,

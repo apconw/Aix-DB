@@ -62,3 +62,4 @@ class AgentState(TypedDict):
     attempts: int = 0  # 尝试次数
     correct_attempts: int = 0  # 正确尝试次数
     chart_url: Optional[str]  # 图表地址
+    char_type: Optional[str]  # 图表类型

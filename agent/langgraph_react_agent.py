@@ -1,5 +1,6 @@
 import asyncio
 import json
+import logging
 import os
 import traceback
 from typing import Optional
@@ -13,6 +14,8 @@ from langgraph.prebuilt import create_react_agent
 
 from constants.code_enum import DataTypeEnum
 from services.user_service import add_user_record
+
+logger = logging.getLogger(__name__)
 
 
 class LangGraphReactAgent:
@@ -44,19 +47,19 @@ class LangGraphReactAgent:
         )
 
         # 使用 os.path 构建路径
-        current_dir = os.path.dirname(os.path.abspath(__file__))
-        mcp_tool_path = os.path.join(current_dir, "mcp", "query_db_tool.py")
+        # current_dir = os.path.dirname(os.path.abspath(__file__))
+        # mcp_tool_path = os.path.join(current_dir, "mcp", "query_db_tool.py")
         self.client = MultiServerMCPClient(
             {
                 "mcp-hub": {
                     "url": os.getenv("MCP_HUB_URL"),
                     "transport": "streamable_http",
                 },
-                "query_qa_record": {
-                    "command": "python",
-                    "args": [mcp_tool_path],
-                    "transport": "stdio",
-                },
+                # "query_qa_record": {
+                #     "command": "python",
+                #     "args": [mcp_tool_path],
+                #     "transport": "stdio",
+                # },
                 # "undoom-douyin-data-analysis": {
                 #     "command": "uvx",
                 #     "transport": "stdio",
@@ -145,6 +148,7 @@ class LangGraphReactAgent:
                 # 工具输出
                 if metadata["langgraph_node"] == "tools":
                     tool_name = message_chunk.name or "未知工具"
+                    logger.info(f"工具调用结果:{message_chunk.content}")
                     tool_use = "> 调用工具:" + tool_name + "\n\n"
                     await response.write(self._create_response(tool_use))
                     t02_answer_data.append(tool_use)
