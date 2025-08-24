@@ -46,6 +46,7 @@ dependencies = [
     "pydantic>=2.11.7",
     "dashscope>=1.24.1",
     "sqlglot>=27.8.0",
+    "mkdocs>=1.6.1",
 ]
 
 [[tool.uv.index]]
