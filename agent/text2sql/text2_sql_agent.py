@@ -42,6 +42,24 @@ class Text2SqlAgent:
             initial_state = AgentState(user_query=query, attempts=0, correct_attempts=0)
             graph: CompiledStateGraph = create_graph()
 
+            # async for chunk in graph.astream(initial_state, stream_mode="values"):
+            #
+            #     # if metadata["langgraph_node"] == "tools":
+            #     #     tool_name = message_chunk.name or "未知工具"
+            #     #     # logger.info(f"工具调用结果:{message_chunk.content}")
+            #     #     tool_use = "> 调用工具:" + tool_name + "\n\n"
+            #     #     await response.write(self._create_response(tool_use))
+            #     #     t02_answer_data.append(tool_use)
+            #     #     continue
+            #     print(chunk)
+            #     # if chunk.content:
+            #     #     logger.info(f"chuck>{chunk}")
+            #     #     logger.info(f"metadata>{metadata}")
+            #     #     await response.write(self._create_response(chunk.content))
+            #     #     if hasattr(response, "flush"):
+            #     #         await response.flush()
+            #     #     await asyncio.sleep(0)
+
             async for chunk_dict in graph.astream(initial_state, stream_mode="updates"):
                 logger.info(f"Processing chunk: {chunk_dict}")
 
@@ -71,13 +89,6 @@ class Text2SqlAgent:
             logger.error(f"Error in run_agent: {str(e)}", exc_info=True)
             error_msg = f"处理过程中发生错误: {str(e)}"
             await self._send_response(response, error_msg, "error")
-            # # 即使出错也尝试保存记录
-            # try:
-            #     await add_user_record(
-            #         uuid_str, chat_id, query, [error_msg], DiFyAppEnum.DATABASE_QA.value[0], user_token
-            #     )
-            # except Exception as record_error:
-            #     logger.error(f"Failed to save user record: {str(record_error)}")
 
     async def _handle_step_change(
         self,

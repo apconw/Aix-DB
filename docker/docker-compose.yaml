@@ -98,11 +98,16 @@ services:
     extra_hosts:
       - "host.docker.internal:host-gateway"
 
-  neo4j:
-    image: neo4j:ubi9
-    container_name: neo4j
+  neo4j-apoc:
+    image: neo4j:5.26.11-ubi9
+    container_name: neo4j-apoc
     ports:
-      - "7687:7687"
       - "7474:7474"
+      - "7687:7687"
     volumes:
-      - ./volume/neo4j:/data
+      - ./volume/neo4j/data:/data
+      - ./volume/neo4j/plugins:/plugins
+    environment:
+      - apoc.export.file.enabled=true
+      - apoc.import.file.enabled=true
+      - apoc.import.file.use_neo4j_config=true
