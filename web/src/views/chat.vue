@@ -67,6 +67,9 @@ function handleModalClose(value) {
 
 // 新建对话
 function newChat() {
+
+  backgroundColorVariable.value = '#ffffff'
+
   if (showDefaultPage.value) {
     window.$ModalMessage.success(`已经是最新对话`)
     return
@@ -240,6 +243,8 @@ const uuids = ref<Record<string, string>>({}) // 改为对象存储不同问答�
 
 // 提交对话
 const handleCreateStylized = async (send_text = '') => {
+
+  backgroundColorVariable.value = '#f6f7fb'
 
   // 滚动到底部
   scrollToBottom()
@@ -505,6 +510,8 @@ const rowProps = (row: any) => {
       currentIndex.value === row.uuid && 'selected-row',
     ].join(' '),
     onClick: async () => {
+
+      backgroundColorVariable.value = '#f6f7fb'
       
       currentIndex.value = row.uuid
       suggested_array.value = []
@@ -729,6 +736,9 @@ const collapsed = useLocalStorage(
   ref(false),
 )
 
+// 背景颜色 默认页面和内容页面动态调整
+const backgroundColorVariable = ref('#ffffff') 
+
 </script>
 
 <template>
@@ -817,7 +827,7 @@ const collapsed = useLocalStorage(
               class="custom-table"
               :style="{
                 'font-size': `16px`,
-                 '--n-td-color': `#fff`, 
+                 '--n-td-color': `#ffffff`, 
                 'font-family': `-apple-system, BlinkMacSystemFont,'Segoe UI', Roboto, 'Helvetica Neue', Arial,sans-serif`,
               }"
               size="small"
@@ -883,7 +893,7 @@ const collapsed = useLocalStorage(
           h-full
         >
           <div flex="~ justify-between items-center">
-            <NavigationNavBar />
+            <NavigationNavBar :background-color="backgroundColorVariable" />
           </div>
 
           <!-- 这里循环渲染即可实现多轮对话 -->
@@ -893,7 +903,7 @@ const collapsed = useLocalStorage(
             min-h-0
             pb-20
             class="scrollable-container"
-            style="background-color: #f6f7fb"
+            :style="{ backgroundColor: backgroundColorVariable }"
           >
             <!-- 默认对话页面 -->
             <transition name="fade">
@@ -1008,8 +1018,8 @@ const collapsed = useLocalStorage(
             </div>
           </div>
 
-          <div
-            class="items-center shrink-0 bg-#f6f7fb"
+         <div
+            :class="['items-center', 'shrink-0', `bg-${backgroundColorVariable}`]"
           >
             <div
               relative

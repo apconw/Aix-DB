@@ -93,7 +93,7 @@ body {
 }
 
 .header {
-  background-color: #f6f7fb;
+  background-color: #fffff;
 
   /* background: linear-gradient(to right, #f1f0fe, #f3f2ff); */
 

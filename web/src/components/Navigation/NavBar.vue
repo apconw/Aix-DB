@@ -4,10 +4,12 @@ import { systemTitle } from '@/base'
 interface Props {
   transparent?: boolean
   hasBorder?: boolean
+  backgroundColor?: string 
 }
 withDefaults(defineProps<Props>(), {
   transparent: true,
   hasBorder: true,
+  backgroundColor: '#ffffff'
 })
 
 const handleToRepo = () => {
@@ -23,6 +25,7 @@ const handleToRepo = () => {
       transparent ? 'bg-bgcolor' : 'bg-transparent',
       hasBorder ? 'b-b-#000/8 b-b-solid' : 'b-b-transparent',
     ]"
+    :style="backgroundColor ? { backgroundColor: backgroundColor } : {}"
   >
     <div class="header-left"></div>
     <div class="flex-1">
@@ -80,7 +83,7 @@ const handleToRepo = () => {
     // background-color: #f0effe;
     // background: linear-gradient(to right, #f0effe, #ddeefe);
 
-    background-color: #f6f7fb;
+    background-color: #ffffff;
 
     // 替换为你的颜色
   }
