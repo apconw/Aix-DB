@@ -56,14 +56,14 @@
 
 <td>
 
-<video src="https://github.com/user-attachments/assets/fc87cf8f-4d32-4d2c-9153-aa7e9be3ce10" controls="controls" muted="muted" class="d-block rounded-bottom-2 border-top width-fit" style="max-height:640px; min-height: 200px">
+<video src="https://github.com/user-attachments/assets/5037ba3b-4480-4be0-8d19-74a18cfd1225" controls="controls" muted="muted" class="d-block rounded-bottom-2 border-top width-fit" style="max-height:640px; min-height: 200px">
 </video>
 
 </td>
 </tr>
 <tr>
 <td>
-<video src="https://github.com/user-attachments/assets/b2f440ba-6cc9-43bf-8af9-7e30d4a20702" controls="controls" muted="muted" class="d-block rounded-bottom-2 border-top width-fit" style="max-height:640px; min-height: 200px">
+<video src="https://github.com/user-attachments/assets/c131e34f-5401-4ae8-a5a6-6531e696e753" controls="controls" muted="muted" class="d-block rounded-bottom-2 border-top width-fit" style="max-height:640px; min-height: 200px">
 </video>
 </td>
 <td>
