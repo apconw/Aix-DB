@@ -25,13 +25,14 @@ const buttonLabel = computed(() => {
   <n-button
     type="default"
     :style="{
-      'border-radius': '100px',
-      'width': '100px',
+      'border-radius': '80px',
+      'width': '110px',
       'padding': '15px',
-      'height': '15px',
-      'font-size': '11px',
-      'color': '#fff',
-      'background': 'linear-gradient(to right, #615ced, #615ced)',
+      'height': '24px',
+      'font-size': '12px',
+       'color': '#fff',
+      'font-family': '-apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Oxygen, Ubuntu, Cantarell, Open Sans, Helvetica Neue, Arial, sans-serif',
+      'background': 'linear-gradient(to right, #625cee, #886ef4)',
     }"
   >
     <template v-if="props.qa_type === 'COMMON_QA'" #icon>
@@ -55,7 +56,7 @@ const buttonLabel = computed(() => {
       </n-icon>
     </template>
     <template v-if="props.qa_type === 'FILEDATA_QA'" #icon>
-      <n-icon size="14">
+      <n-icon size="18">
         <svg
           t="1732505460059"
           class="icon"
@@ -80,7 +81,7 @@ const buttonLabel = computed(() => {
       </n-icon>
     </template>
     <template v-if="props.qa_type === 'DATABASE_QA'" #icon>
-      <n-icon size="14">
+      <n-icon size="18">
         <svg
           t="1732505379377"
           class="icon"

@@ -60,6 +60,7 @@ class DatabaseService:
         :param state:
         :return:
         获取数据中所有表schema信息
+        使用BM25算法过滤出相关表信息
         :return: 表schema信息
         """
         try:

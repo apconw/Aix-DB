@@ -68,6 +68,7 @@ async def data_render_ant(state: AgentState):
             - 不要解释图表内容或生成文字说明。
             - 必须返回符合格式的图表链接。
             - 图表需清晰表达数据关系，符合可视化最佳实践。
+            - x轴和y轴的标签必须使用中文显示。
             
             ### 返回格式
              ![图表](https://example.com/chart.png)
