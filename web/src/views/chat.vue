@@ -777,6 +777,129 @@ onBeforeUnmount(() => {
   }
 })
 // ===============================================//
+
+const UploadWrapperItem = defineComponent({
+  name: 'UploadWrapperItem',
+  props: {
+    fileName: {
+      type: String,
+      default: '这是文件名文件名文件名.xlsx',
+    },
+  },
+  emits: ['remove'],
+  setup(props, { emit }) {
+    // 解析中、解析失败、解析完成
+    const statusList = ref([
+      {
+        status: 'parsing',
+        text: '解析中...',
+        icon: 'i-svg-spinners:6-dots-rotate',
+      },
+      {
+        status: 'failed',
+        text: '解析失败',
+        icon: 'i-carbon:error c-red',
+      },
+      {
+        status: 'success',
+        text: '解析完成',
+        icon: 'i-carbon:checkmark',
+      },
+    ])
+    const _status = ref('parsing')
+
+    // 模拟一下整个解析的过程, 比如几秒后变一下
+    setTimeout(() => {
+      _status.value = 'success'
+    }, 5000)
+
+    const currentStatus = computed(() => {
+      return statusList.value.find((item) => item.status === _status.value)
+    })
+
+    // 文件类型 mapping
+    const fileTypeIconMap = ref({
+      xlsx: 'i-vscode-icons:file-type-excel2',
+      xls: 'i-vscode-icons:file-type-excel2',
+      docx: 'i-vscode-icons:file-type-word',
+      doc: 'i-vscode-icons:file-type-word',
+      pdf: 'i-vscode-icons:file-type-pdf2',
+      jpg: 'i-vscode-icons:file-type-image',
+      jpeg: 'i-vscode-icons:file-type-image',
+      png: 'i-vscode-icons:file-type-image',
+      gif: 'i-vscode-icons:file-type-image',
+      bmp: 'i-vscode-icons:file-type-image',
+    })
+
+    // 图标
+    const fileIcon = computed(() => {
+      // 从文件名中提取文件类型
+      const fileExtension = props.fileName.split('.').pop()?.toLowerCase()
+      return fileTypeIconMap.value[fileExtension as any]
+    })
+
+    const removeFile = () => {
+      // 模拟移除文件
+      // 若针对多文件 list 删除，则需要对 list 进行 splice 操作，这里仅模拟删除，实际删除需要根据文件 list 索引进行删除
+      window.$ModalMessage.success('模拟数据，移除成功！')
+      emit('remove')
+    }
+
+    return {
+      statusList,
+      currentStatus,
+      fileTypeIconMap,
+      fileIcon,
+      removeFile,
+    }
+  },
+  render() {
+    return (
+      <div
+        class="relative w-25% px-16 py-5 b b-solid b-bgcolor rounded-8 group transition-all-300"
+        flex="~ gap-5 items-center"
+      >
+        <div class="absolute z-1 top--9 right--9 group-hover:opacity-100 opacity-0 transition-all-300">
+          <div
+            class="text-20 c-info cursor-pointer i-famicons:remove-circle-outline transition-all-300 hover:c-primary"
+            onClick={this.removeFile}
+          ></div>
+        </div>
+        <div class="size-30">
+          <div class={[
+            this.fileIcon,
+            'size-full opacity-80',
+          ]}
+          ></div>
+        </div>
+        <div
+          flex="1 ~ col gap-2"
+          class="min-w-0 text-13 overflow-x-hidden"
+        >
+          <n-ellipsis
+            tooltip
+          >
+            {{
+              default: () => this.fileName,
+              tooltip: () => this.fileName,
+            }}
+          </n-ellipsis>
+          <div
+            flex="~ gap-3 items-center"
+            class="text-[#999]"
+          >
+            <span class={[
+              'text-12',
+              this.currentStatus?.icon,
+            ]}
+            ></span>
+            <span class="text-11">{ this.currentStatus?.text }</span>
+          </div>
+        </div>
+      </div>
+    )
+  },
+})
 </script>
 
 <template>
@@ -1076,10 +1199,13 @@ onBeforeUnmount(() => {
               relative
               class="flex-1 w-full p-1em"
             >
-              <n-space vertical>
+              <n-space
+                vertical
+                class="mx-10%"
+              >
                 <div
                   flex="~ gap-10"
-                  class="h-40 ml-10%"
+                  class="h-40"
                 >
                   <n-button
                     type="default"
@@ -1222,99 +1348,112 @@ onBeforeUnmount(() => {
                     报告问答
                   </n-button>
                 </div>
-                <n-input
-                  ref="refInputTextString"
-                  v-model:value="inputTextString"
-                  type="textarea"
-                  class="textarea-resize-none text-15"
-                  :style="{
-                    '--n-border-radius': '15px',
-                    '--n-padding-left': '15px',
-                    '--n-padding-right': '20px',
-                    '--n-padding-vertical': '18px',
-                    'width': '80%',
-                    'marginLeft': '10%',
-                    'align': 'center',
-                    'font-family': `-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji'`,
-                    'font-size': '16px',
-                    'line-height': '1.5',
-                  }"
-                  :placeholder="placeholder"
-                  :autosize="{
-                    minRows: 1,
-                    maxRows: 10,
-                  }"
+                <div
+                  :class="[
+                    'b b-solid b-primary bg-white',
+                    'rounded-10px p-16',
+                  ]"
                 >
-                  <template
-                    #prefix
-                  >
-                    <n-dropdown
-                      :options="options"
-                      @select="handleSelect"
-                    >
-                      <n-icon size="30">
-                        <svg
-                          t="1729566080604"
-                          class="icon"
-                          viewBox="0 0 1024 1024"
-                          version="1.1"
-                          xmlns="http://www.w3.org/2000/svg"
-                          p-id="38910"
-                          width="64"
-                          height="64"
-                        >
-                          <path
-                            d="M856.448 606.72v191.744a31.552 31.552 0 0 1-31.488 31.488H194.624a31.552 31.552 0 0 1-31.488-31.488V606.72a31.488 31.488 0 1 1 62.976 0v160.256h567.36V606.72a31.488 31.488 0 1 1 62.976 0zM359.872 381.248c-8.192 0-10.56-5.184-5.376-11.392L500.48 193.152a11.776 11.776 0 0 1 18.752 0l145.856 176.704c5.184 6.272 2.752 11.392-5.376 11.392H359.872z"
-                            fill="#838384"
-                            p-id="38911"
-                          />
-                          <path
-                            d="M540.288 637.248a30.464 30.464 0 1 1-61.056 0V342.656a30.464 30.464 0 1 1 61.056 0v294.592z"
-                            fill="#838384"
-                            p-id="38912"
-                          />
-                        </svg>
-                      </n-icon>
-                    </n-dropdown>
-                    <!-- 隐藏的文件上传按钮 -->
-                    <n-upload
-                      ref="uploadRef"
-                      type="button"
-                      :show-file-list="false"
-                      action="sanic/file/upload_file"
-                      accept=".xlsx,.xls,.csv"
-                      style="display: none"
-                      @finish="finish_upload"
-                    >
-                      选择文件
-                    </n-upload>
-                  </template>
+                  <!-- 如果支持多文件，则你需要维护一个文件 list, 在此处 v-for循环组件即可 -->
+                  <!-- 若仅支持一个文件，则不需要循环，仅需要展示一个 UploadWrapperItem 组件，多次上传时每次覆盖旧的文件即可 -->
+                  <!-- 你还需要处理复制粘贴（记得过滤非法文件）、手动拖拽文件到 input 框中的逻辑，进而每个文件对应到一个 UploadWrapperItem -->
+                  <div class="upload-wrapper-list">
+                    <!-- 以下是测试数据，目前仅接收一个文件名，你可能还需要接收文件流，进而在 UploadWrapperItem 内部触发解析的接口 -->
+                    <UploadWrapperItem fileName="报告问答.pdf" @remove="() => {}" />
+                    <UploadWrapperItem fileName="报告问答.docx" @remove="() => {}" />
+                    <UploadWrapperItem fileName="这是数据表名称数据表名称.xlsx" @remove="() => {}" />
+                    <UploadWrapperItem fileName="某某某某某某某某某某某某某某图片.png" @remove="() => {}" />
+                  </div>
 
-                  <template
-                    #suffix
+                  <n-input
+                    ref="refInputTextString"
+                    v-model:value="inputTextString"
+                    type="textarea"
+                    class="textarea-resize-none w-full text-15 [&_.n-input\_\_border]:hidden [&_.n-input\_\_state-border]:hidden [&_.n-input-wrapper]:p-0!"
+                    :style="{
+                      '--n-border-radius': '15px',
+                      'align': 'center',
+                      'font-family': `-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji'`,
+                      'font-size': '16px',
+                      'line-height': '1.5',
+                    }"
+                    :placeholder="placeholder"
+                    :autosize="{
+                      minRows: 1,
+                      maxRows: 10,
+                    }"
                   >
-                    <n-float-button
-                      position="absolute"
-                      :type="stylizingLoading ? 'primary' : 'default'"
-                      color
-                      right="8px"
-                      :class="[
-                        stylizingLoading && 'opacity-90',
-                        'text-20',
-                      ]"
-                      @click.stop="handleCreateStylized()"
+                    <template
+                      #prefix
                     >
-                      <div
-                        v-if="stylizingLoading"
-                        class="i-svg-spinners:pulse-2 c-#fff"
-                      ></div>
-                      <div
-                        v-else
-                        class="flex items-center justify-center c-#303133/60 i-mingcute:send-fill"
-                      ></div>
-                    </n-float-button>
-                  </template>
-                </n-input>
+                      <n-dropdown
+                        :options="options"
+                        @select="handleSelect"
+                      >
+                        <n-icon size="30">
+                          <svg
+                            t="1729566080604"
+                            class="icon"
+                            viewBox="0 0 1024 1024"
+                            version="1.1"
+                            xmlns="http://www.w3.org/2000/svg"
+                            p-id="38910"
+                            width="64"
+                            height="64"
+                          >
+                            <path
+                              d="M856.448 606.72v191.744a31.552 31.552 0 0 1-31.488 31.488H194.624a31.552 31.552 0 0 1-31.488-31.488V606.72a31.488 31.488 0 1 1 62.976 0v160.256h567.36V606.72a31.488 31.488 0 1 1 62.976 0zM359.872 381.248c-8.192 0-10.56-5.184-5.376-11.392L500.48 193.152a11.776 11.776 0 0 1 18.752 0l145.856 176.704c5.184 6.272 2.752 11.392-5.376 11.392H359.872z"
+                              fill="#838384"
+                              p-id="38911"
+                            />
+                            <path
+                              d="M540.288 637.248a30.464 30.464 0 1 1-61.056 0V342.656a30.464 30.464 0 1 1 61.056 0v294.592z"
+                              fill="#838384"
+                              p-id="38912"
+                            />
+                          </svg>
+                        </n-icon>
+                      </n-dropdown>
+                      <!-- 隐藏的文件上传按钮 -->
+                      <n-upload
+                        ref="uploadRef"
+                        type="button"
+                        :show-file-list="false"
+                        action="sanic/file/upload_file"
+                        accept=".xlsx,.xls,.csv"
+                        style="display: none"
+                        @finish="finish_upload"
+                      >
+                        选择文件
+                      </n-upload>
+                    </template>
+
+                    <template
+                      #suffix
+                    >
+                      <n-float-button
+                        position="absolute"
+                        :type="stylizingLoading ? 'primary' : 'default'"
+                        color
+                        right="8px"
+                        :class="[
+                          stylizingLoading && 'opacity-90',
+                          'text-20',
+                        ]"
+                        @click.stop="handleCreateStylized()"
+                      >
+                        <div
+                          v-if="stylizingLoading"
+                          class="i-svg-spinners:pulse-2 c-#fff"
+                        ></div>
+                        <div
+                          v-else
+                          class="flex items-center justify-center c-#303133/60 i-mingcute:send-fill"
+                        ></div>
+                      </n-float-button>
+                    </template>
+                  </n-input>
+                </div>
               </n-space>
             </div>
           </div>
@@ -1596,5 +1735,9 @@ onBeforeUnmount(() => {
     transform: scale(1.5);
     opacity: 0;
   }
+}
+
+.upload-wrapper-list {
+  --at-apply: flex flex-wrap gap-10 items-center;
 }
 </style>
