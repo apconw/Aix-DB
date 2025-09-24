@@ -4,6 +4,7 @@ import { UAParser } from 'ua-parser-js'
 import * as GlobalAPI from '@/api'
 import { isMockDevelopment } from '@/config'
 import DefaultPage from './DefaultPage.vue'
+import FileUploadManager from './FileUploadManager.vue'
 import SuggestedView from './SuggestedPage.vue'
 import TableModal from './TableModal.vue'
 
@@ -234,13 +235,21 @@ const contentLoadingStates = ref(
   visibleConversationItems.value.map(() => false),
 )
 
-//
 
-
-const uuids = ref<Record<string, string>>({}) // 改为对象存储不同问答类型的uuid
+// 改为对象存储不同问答类型的uuid
+const uuids = ref<Record<string, string>>({})
 
 // 提交对话
 const handleCreateStylized = async (send_text = '') => {
+  // 判断是否有未上传的文件
+  if (fileUploadRef.value?.pendingUploadFileInfoList && fileUploadRef.value.pendingUploadFileInfoList.length > 0) {
+    console.log(fileUploadRef.value.pendingUploadFileInfoList)
+    // 清空文件上传列表
+    pendingUploadFileInfoList.value = []
+  }
+
+
+  // 设置背景颜色
   backgroundColorVariable.value = '#f6f7fb'
 
   // 滚动到底部
@@ -471,26 +480,6 @@ const handleResetState = () => {
 }
 handleResetState()
 
-// // 文件上传
-// const file_name = ref('')
-// const finish_upload = (res) => {
-//   file_name.value = res.file.name
-//   if (res.event.target.responseText) {
-//     const json_data = JSON.parse(res.event.target.responseText)
-//     const file_url = json_data.data.object_key
-//     if (json_data.code === 200) {
-//       onAqtiveChange('FILEDATA_QA', '')
-//       businessStore.update_file_url(file_url)
-//       window.$ModalMessage.success(`文件上传成功`)
-//     } else {
-//       window.$ModalMessage.error(`文件上传失败`)
-//       return
-//     }
-//     const file_name_without_extension = file_name.value.slice(0, file_name.value.lastIndexOf('.')) || file_name.value
-//     const query_text = `分析${file_name_without_extension}表格数据`
-//     handleCreateStylized(query_text)
-//   }
-// }
 
 // 下面方法用于左侧对话列表点击 右侧内容滚动
 // 用于存储每个 MarkdownPreview 容器的引用
@@ -623,32 +612,6 @@ const onSuggested = (index: number) => {
   handleCreateStylized(suggested_array.value[index])
 }
 
-const pendingUploadFileInfoList = ref<ExtendedUploadFileInfo[]>([])
-
-
-// 下拉菜单选项选择事件处理程序
-// const uploadRef = useTemplateRef('uploadRef')
-// function handleSelect(key: string) {
-//   // if (key === 'excel') {
-//   //   // 使用 nextTick 确保 DOM 更新完成后执行
-//   //   nextTick(() => {
-//   //     if (uploadRef.value) {
-//   //       // 尝试直接调用 n-upload 的点击方法
-//   //       // 如果 n-upload 没有提供这样的方法，可以查找内部的 input 并调用 click 方法
-//   //       const fileInput
-//   //                   = uploadRef.value.$el.querySelector('input[type="file"]')
-//   //       if (fileInput) {
-//   //         fileInput.click()
-//   //       }
-//   //     }
-//   //   })
-//   // } else {
-//   //   window.$ModalMessage.success('功能开发中', {
-//   //     duration: 1500,
-//   //   })
-//   // }
-// }
-
 // 侧边表格滚动条数 动态显示隐藏设置
 const scrollableContainer = useTemplateRef('scrollableContainer')
 
@@ -758,290 +721,16 @@ onBeforeUnmount(() => {
   }
 })
 
-// ===============================================//
-// 上传附件 下拉菜单的选项
-const options = [
-  {
-    key: 'document',
-    type: 'render',
-    render() {
-      return (
-        <n-upload
-          accept=".doc,.docx,.ppt,.pptx,.pdf,.txt,.xlsx,.csv"
-          default-upload={false}
-          show-file-list={false}
-          multiple={false}
-          onChange={(res) => {
-            pendingUploadFileInfoList.value.push(res.file)
-            // 触发实际上传
-            handleFileUpload(res.file)
-          }}
-        >
-          <div class="px-4">
-            <div
-              flex="~ items-center gap-4"
-              class="cursor-pointer px-12 py-4 hover:bg-primary/10 transition-all-300"
-            >
-              <span class="i-material-symbols:file-open-outline text-16" />
-              <span>上传文档</span>
-            </div>
-          </div>
-        </n-upload>
-      )
-    },
-  },
-  {
-    key: 'image',
-    type: 'render',
-    render() {
-      return (
-        // <n-upload
-        //   accept="image/*"
-        //   default-upload={false}
-        //   show-file-list={false}
-        //   multiple
-        //   onChange={(res) => {
-        //     pendingUploadFileInfoList.value.push(res.file)
-        //     // 触发实际上传
-        //     handleFileUpload(res.file)
-        //   }}
-        // >
-        <div onClick={(e) => {
-          // 阻止事件冒泡
-          e.stopPropagation()
-          // 显示提示信息
-          window.$ModalMessage.info('暂不支持图片解析')
-        }}
-        >
-          <div class="px-4">
-            <div
-              flex="~ items-center gap-4"
-              class="cursor-pointer px-12 py-4 hover:bg-primary/10 transition-all-300"
-            >
-              <span class="i-mdi:file-image-outline text-16" />
-              <span>上传图片</span>
-            </div>
-          </div>
-        </div>
-      )
-    },
-  },
-]
-
-// 在您的项目中添加类型扩展
-interface ExtendedUploadFileInfo extends UploadFileInfo {
-  error?: Error
+// ============================== 文件上传 ============================//
+interface FileUploadRef {
+  pendingUploadFileInfoList: UploadFileInfo[] | null | undefined
+  options?: any[]
+  reset?: () => void
 }
-// 处理文件上传的函数
-const handleFileUpload = async (fileInfo: ExtendedUploadFileInfo) => {
-  const formData = new FormData()
-  if (fileInfo.file) {
-    formData.append('file', fileInfo.file)
-  }
+const fileUploadRef = ref<FileUploadRef | null>(null)
 
-  try {
-    const response = await fetch('sanic/file/upload_file_and_parse', {
-      method: 'POST',
-      body: formData,
-    })
-
-    const result = await response.json()
-
-    if (result.code === 200) {
-      // 更新文件状态为成功
-      const index = pendingUploadFileInfoList.value.findIndex((f) => f.id === fileInfo.id)
-      if (index !== -1) {
-        pendingUploadFileInfoList.value[index].status = 'finished'
-        pendingUploadFileInfoList.value[index].percentage = 100
-        // 设置文件URL
-        businessStore.update_file_url(result.data.object_key)
-      }
-      window.$ModalMessage.success(`文件上传并解析成功`)
-    } else {
-      // 更新文件状态为失败
-      const index = pendingUploadFileInfoList.value.findIndex((f) => f.id === fileInfo.id)
-      if (index !== -1) {
-        pendingUploadFileInfoList.value[index].status = 'error'
-        pendingUploadFileInfoList.value[index].error = new Error(result.message || '上传失败')
-      }
-      window.$ModalMessage.error(`文件上传失败`)
-    }
-  } catch (error) {
-    // 更新文件状态为失败
-    const index = pendingUploadFileInfoList.value.findIndex((f) => f.id === fileInfo.id)
-    if (index !== -1) {
-      pendingUploadFileInfoList.value[index].status = 'error'
-      if (error instanceof Error) {
-        pendingUploadFileInfoList.value[index].error = error
-      } else {
-        pendingUploadFileInfoList.value[index].error = new Error(String(error))
-      }
-    }
-    window.$ModalMessage.error(`文件上传失败: ${error instanceof Error ? error.message : String(error)}`)
-  }
-}
-const UploadWrapperItem = defineComponent({
-  name: 'UploadWrapperItem',
-  props: {
-    fileInfo: {
-      type: Object as PropType<UploadFileInfo>,
-      default: () => null,
-    },
-  },
-  emits: ['remove'],
-  setup(props, { emit }) {
-    // 解析中、解析失败、解析完成
-    const statusList = ref([
-      {
-        status: 'parsing',
-        text: '解析中...',
-        icon: 'i-svg-spinners:6-dots-rotate',
-      },
-      {
-        status: 'failed',
-        text: '解析失败',
-        icon: 'i-carbon:error c-red',
-      },
-      {
-        status: 'success',
-        text: '解析完成',
-        icon: 'i-carbon:checkmark',
-      },
-    ])
-
-    // 根据实际上传文件状态确定解析状态
-    const _status = computed(() => {
-      if (props.fileInfo.status === 'finished') {
-        if ((props.fileInfo as ExtendedUploadFileInfo).percentage === 100 && !(props.fileInfo as ExtendedUploadFileInfo).error) {
-          return 'success'
-        } else if ((props.fileInfo as ExtendedUploadFileInfo).error) {
-          return 'failed'
-        }
-        return 'parsing'
-      } else if (props.fileInfo.status === 'error') {
-        return 'failed'
-      }
-      return 'parsing'
-    })
-
-    const isImage = computed(() => {
-      return props.fileInfo.type?.includes('image')
-    })
-
-    const fileName = computed(() => {
-      return props.fileInfo.name || ''
-    })
-
-    const previewImageUrl = ref('')
-    const onImageFile = () => {
-      const file = props.fileInfo.file
-      if (!file) {
-        return
-      }
-
-      if (!isImage.value) {
-        return
-      }
-
-      previewImageUrl.value = URL.createObjectURL(file)
-    }
-
-    watchEffect(onImageFile)
-
-    const currentStatus = computed(() => {
-      return statusList.value.find((item) => item.status === _status.value)
-    })
-
-    const fileTypeIconMap = ref({
-      xlsx: 'i-vscode-icons:file-type-excel2',
-      xls: 'i-vscode-icons:file-type-excel2',
-      csv: 'i-vscode-icons:file-type-excel2',
-      docx: 'i-vscode-icons:file-type-word',
-      doc: 'i-vscode-icons:file-type-word',
-      pdf: 'i-vscode-icons:file-type-pdf2',
-      pptx: 'i-vscode-icons:file-type-powerpoint',
-      ppt: 'i-vscode-icons:file-type-powerpoint',
-    })
-
-    const fileIcon = computed(() => {
-      const fileExtension = fileName.value.split('.').pop()?.toLowerCase()
-      return fileTypeIconMap.value[fileExtension as any]
-    })
-
-    const removeFile = () => {
-      emit('remove')
-    }
-
-    return {
-      isImage,
-      previewImageUrl,
-      fileName,
-      statusList,
-      currentStatus,
-      fileTypeIconMap,
-      fileIcon,
-      removeFile,
-    }
-  },
-  render() {
-    return (
-      <div
-        class="relative w-25% px-16 py-5 b b-solid b-bgcolor rounded-8 group transition-all-300"
-        flex="~ gap-5 items-center"
-      >
-        <div class="absolute z-1 top--9 right--9 group-hover:opacity-100 opacity-0 transition-all-300">
-          <div
-            class="text-20 c-info cursor-pointer i-famicons:remove-circle-outline transition-all-300 hover:c-primary"
-            onClick={this.removeFile}
-          ></div>
-        </div>
-        <div class="size-30">
-          {
-            this.isImage
-              ? (
-                  <img
-                    src={this.previewImageUrl}
-                    class="size-full object-contain"
-                  />
-                )
-              : (
-                  <div
-                    class={[
-                      this.fileIcon,
-                      'size-full opacity-80',
-                    ]}
-                  ></div>
-                )
-          }
-        </div>
-        <div
-          flex="1 ~ col gap-2"
-          class="min-w-0 text-13 overflow-x-hidden"
-        >
-          <n-ellipsis
-            tooltip
-          >
-            {{
-              default: () => this.fileName,
-              tooltip: () => this.fileName,
-            }}
-          </n-ellipsis>
-          <div
-            flex="~ gap-3 items-center"
-            class="text-[#999]"
-          >
-            <span class={[
-              'text-12',
-              this.currentStatus?.icon,
-            ]}
-            ></span>
-            <span class="text-11">{ this.currentStatus?.text }</span>
-          </div>
-        </div>
-      </div>
-    )
-  },
-})
+// 用于绑定文件上传信息列表
+const pendingUploadFileInfoList = ref([])
 </script>
 
 <template>
@@ -1496,19 +1185,10 @@ const UploadWrapperItem = defineComponent({
                     'rounded-10px p-12',
                   ]"
                 >
-                  <div
-                    v-if="pendingUploadFileInfoList.length"
-                    class="upload-wrapper-list"
-                  >
-                    <UploadWrapperItem
-                      v-for="(pendingUploadFileInfo, index) in pendingUploadFileInfoList"
-                      :key="pendingUploadFileInfo.id"
-                      :fileInfo="pendingUploadFileInfo"
-                      @remove="() => {
-                        pendingUploadFileInfoList.splice(index, 1)
-                      }"
-                    />
-                  </div>
+                  <FileUploadManager
+                    ref="fileUploadRef"
+                    v-model="pendingUploadFileInfoList"
+                  />
 
                   <n-input
                     ref="refInputTextString"
@@ -1532,7 +1212,7 @@ const UploadWrapperItem = defineComponent({
                       #prefix
                     >
                       <n-dropdown
-                        :options="options"
+                        :options="fileUploadRef?.options || []"
                       >
                         <div flex="~ items-center justify-center" class="rounded-50% p-7 hover:bg-primary/5 transition-all-300 bg-primary/1" b="~ solid primary/20">
                           <div class="text-20  i-uil:upload cursor-pointer"></div>
