@@ -882,7 +882,8 @@ const pendingUploadFileInfoList = ref([])
               ref="tableRef"
               class="custom-table"
               :style="{
-                'font-size': `16px`,
+                'font-size': `20px`,
+                'fontcolor': `red`,
                 '--n-td-color': `#ffffff`,
                 'font-family': `-apple-system, BlinkMacSystemFont,'Segoe UI', Roboto, 'Helvetica Neue', Arial,sans-serif`,
               }"
@@ -1439,11 +1440,33 @@ const pendingUploadFileInfoList = ref([])
 }
 
 :deep(.custom-table td) {
-  color: #2C2C36;
-  font-size: 14px;
-  padding: 12px 25px;
+  color: #113;
+  padding: 12px 30px;
   background-color:  #fff;
   transition: background-color 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* 优化后的系统字体栈：优先使用系统原生字体 */
+
+  font-family:
+    /* macOS */ -apple-system,
+    /* Windows */ BlinkMacSystemFont,
+    /* 通用系统UI */ 'Segoe UI',
+    /* 开源跨平台 */ Roboto,
+    /* Linux */ Oxygen, Ubuntu, Cantarell,
+    /* fallback */ 'Open Sans', 'Helvetica Neue', Arial,
+    /* 终极兜底 */ sans-serif,
+    /* 现代浏览器推荐 */ system-ui,
+    /* 苹果新字体支持 */ "SF Pro Text";
+
+  /* 可选：基础字体大小与行高，提升可读性 */
+
+  font-size: 14px;
+
+  /* 优化字体渲染 */
+
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizelegibility;
 }
 
 :deep(.custom-table .selected-row td) {

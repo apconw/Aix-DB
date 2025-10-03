@@ -93,7 +93,7 @@ body {
 }
 
 .header {
-  background-color: #fffff;
+  background-color: #fff;
 
   /* background: linear-gradient(to right, #f1f0fe, #f3f2ff); */
 
@@ -160,7 +160,7 @@ body {
 }
 
 .title {
-  color: #333;
+  color: #113;
   font-size: 17px;
   margin-bottom: 5px;
 }

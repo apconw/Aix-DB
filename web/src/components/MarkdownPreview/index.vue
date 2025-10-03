@@ -630,8 +630,32 @@ const onChartCompletedReader = function () {
   padding: 1px 18px;
   border-top-right-radius: 16px;
   border-top-left-radius: 16px;
-  color: #2c2c36;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', Arial, sans-serif;
+  color: #113;
+
+  /* 优化后的系统字体栈：优先使用系统原生字体 */
+
+  font-family:
+    /* macOS */ -apple-system,
+    /* Windows */ BlinkMacSystemFont,
+    /* 通用系统UI */ 'Segoe UI',
+    /* 开源跨平台 */ Roboto,
+    /* Linux */ Oxygen, Ubuntu, Cantarell,
+    /* fallback */ 'Open Sans', 'Helvetica Neue', Arial,
+    /* 终极兜底 */ sans-serif,
+    /* 现代浏览器推荐 */ system-ui,
+    /* 苹果新字体支持 */ "SF Pro Text";
+
+  /* 可选：基础字体大小与行高，提升可读性 */
+
+  font-size: 16px;
+  line-height: 1.7;
+  font-weight: 400;
+
+  /* 优化字体渲染 */
+
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizelegibility;
 
   h1 {
     font-size: 2em;
