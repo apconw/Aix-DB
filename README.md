@@ -87,7 +87,7 @@
 
 
 ## 🐳 关于技术支持申明
-- 开源不易，本人精力和时间有限，如需一对一技术支持，请先赞助。联系微信(备注 **技术支持**)
+- 开源不易，本人精力和时间有限，如需**一对一技术支持**，请先赞助。联系微信(备注 **技术支持**)
 - 支持解决Dify画布前端展示不美观、缺乏登录权限等问题，提供需求开发支持。
 - 帮你快速落地具体场景的画布适配开发，通过 Demo 展示，助力你高效完成 ***kip*** 考核。
 
@@ -98,14 +98,27 @@
 | 需求开发支持 **具体场景Dify画布开发** **下面开源Dify画布前后端适配开发**   | **500元起**  |   
 
 
-## QA交流群
-- 大模型应用交流群欢迎大家, 欢迎加进群讨论分享经验
-- 关注下面的公众号点击·**微信群**菜单添加微信拉你入群
+## 💬👥 交流群
+- 想了解更多？欢迎关注并转发下面我的微信公众号文章(持续更新中)。
+- 如有帮助，欢迎赞助支持，**入群方式详见公众号文章末说明**。
 
 <table>
 <tbody>
 <tr>
-<td><img src="/docs/docs/images/wchat-search.png" alt="" style="width:680px;max-height:640px; min-height: 200px"></td>
+<td><img src="/docs/docs/images/ocr.png" alt="" style="width:60px;height:40px;"></td>
+<td><a href="https://mp.weixin.qq.com/s/kxzDs0chEqHYBYE_u8TZZw">大模型如何读懂任何格式文件并自动生成报告？LangGraph + MCP 实战解析</a></td>
+</tr>
+<tr>
+<td><img src="/docs/docs/images/antv-chart.png" alt="" style="width:60px;height:40px;"></td>
+<td><a href="https://mp.weixin.qq.com/s/8KmZaIEnCZlHFp_1oyknMA">用 AntV MCP Server Chart 赋能大模型 —— 从零构建可视化智能体，图表生成效率飙升！</a></td>
+</tr>
+<tr>
+<td><img src="/docs/docs/images/eno4j.png" alt="" style="width:60px;height:40px;"></td>
+<td><a href="https://mp.weixin.qq.com/s/XOdAeua2UyPxASM1CeXPmg">Neo4j构建语义图谱，大模型秒懂表关系，Text2SQ准确率狂飙300%！告别瞎猜！</a></td>
+</tr>
+<tr>
+<td><img src="/docs/docs/images/text2sql.png" alt="" style="width:60px;height:40px;"></td>
+<td><a href="https://mp.weixin.qq.com/s/sjCJNbdoNAfFOECWUKfElw">用 BM25 + 中文分词实现 Text2SQL 表过滤 —— 让大模型只看“相关表”，准确率飙升！![img.png](img.png)</a></td>
 </tr>
 </tbody>
 </table>
