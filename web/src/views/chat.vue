@@ -843,7 +843,7 @@ const pendingUploadFileInfoList = ref([])
               <n-button
                 type="primary"
                 icon-placement="left"
-                color="#5f5ae9"
+                color="#3e2cff"
                 strong
                 class="create-chat"
                 :disabled="stylizingLoading"
