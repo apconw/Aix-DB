@@ -48,7 +48,7 @@ class LangGraphReactAgent:
             top_p=float(os.getenv("TOP_P", 0.8)),
             frequency_penalty=float(os.getenv("FREQUENCY_PENALTY", 0.0)),
             presence_penalty=float(os.getenv("PRESENCE_PENALTY", 0.0)),
-            timeout=float(os.getenv("REQUEST_TIMEOUT", 30.0)),
+            timeout=float(os.getenv("REQUEST_TIMEOUT", 300.0)),
             max_retries=int(os.getenv("MAX_RETRIES", 3)),
             streaming=os.getenv("STREAMING", "True").lower() == "true",
             # 将额外参数通过 extra_body 传递
@@ -156,7 +156,7 @@ class LangGraphReactAgent:
 
             # 使用用户会话ID作为thread_id，如果未提供则使用默认值
             thread_id = session_id if session_id else "default_thread"
-            config = {"configurable": {"thread_id": thread_id}}
+            config = {"configurable": {"thread_id": thread_id}, "recursion_limit": 50}
 
             system_message = SystemMessage(
                 content="""
@@ -203,6 +203,12 @@ class LangGraphReactAgent:
                - 不模拟人类情感或主观判断
                - 不提供医疗、法律等专业建议（除非明确授权）
                - 不处理包含隐私、敏感或机密信息的请求
+               
+            ## 关键规则
+                1. 在完成用户请求后必须直接输出最终答案，不要进行额外的操作
+                2. 避免无意义的重复工具调用
+                3. 当不需要调用工具时，直接回答用户问题
+                4. 在完成任务后立即停止，不要进行自我反思或额外验证
             
             ## Workflows
             
