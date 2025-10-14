@@ -1,9 +1,10 @@
+import os
+
 from sanic import Sanic
 from sanic.response import empty
 
 import controllers
 from common.route_utility import autodiscover
-from config import serv
 from config.load_env import load_env
 
 # 加载配置文件
@@ -20,5 +21,15 @@ autodiscover(
 app.route("/")(lambda _: empty())
 
 
+def get_server_config():
+    """获取服务器配置参数"""
+    return {
+        "host": os.getenv("SERVER_HOST", "0.0.0.0"),
+        "port": int(os.getenv("SERVER_PORT", 8088)),
+        "workers": int(os.getenv("SERVER_WORKERS", 2)),
+    }
+
+
 if __name__ == "__main__":
-    app.run(host=serv.host, port=serv.port, workers=serv.workers)
+    config = get_server_config()
+    app.run(**config)

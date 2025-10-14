@@ -1,4 +1,6 @@
 import json
+import logging
+import traceback
 from decimal import Decimal
 
 from agent.text2sql.state.agent_state import AgentState, ExecutionResult
@@ -15,6 +17,8 @@ Apache EChart数据渲染节点来支撑表格的渲染
 前期使用硬编码方式后面使用MCP方式
 """
 
+logger = logging.getLogger(__name__)
+
 
 def data_render_apache(state: AgentState) -> dict:
     """
@@ -24,7 +28,7 @@ def data_render_apache(state: AgentState) -> dict:
     :return: 包含图表数据的字典
     """
     table_schema_info = state.get("db_info", {})
-    sql_reasoning = state.get("sql_reasoning", "")
+    # sql_reasoning = state.get("sql_reasoning", "")
     generated_sql = state.get("generated_sql", "")
     data_result: ExecutionResult = state.get("execution_result")
 
@@ -34,7 +38,7 @@ def data_render_apache(state: AgentState) -> dict:
     # 获取生成的SQL中的表名
     generated_table_names = extract_table_names_sqlglot(generated_sql)
     if not generated_table_names:
-        print("未从SQL中提取到表名")
+        logger.info("未从SQL中提取到表名")
         return table_data
 
     target_table = generated_table_names[0]  # 默认使用第一个表获取 schema
@@ -46,9 +50,12 @@ def data_render_apache(state: AgentState) -> dict:
     # 获取原始列名（英文字段名），用于映射数据
     try:
         columns = table_schema_info.get(target_table, {}).get("columns", {})
+        # 兼容表格问答 todo
+        if not columns:
+            columns = table_schema_info["columns"]
         english_columns = list(columns.keys())  # 保持与 comment 相同的顺序
     except Exception as e:
-        print(f"获取表 {target_table} 的列名失败: {e}")
+        logger.info(f"获取表 {target_table} 的列名失败: {e}")
         english_columns = []
 
     # 填充 result 数据
@@ -62,7 +69,7 @@ def data_render_apache(state: AgentState) -> dict:
                 table_data["data"]["result"].append(dict(zip(column_comments, row_values)))
             else:
                 # 兼容非 dict 格式（如元组或列表）
-                print(f"数据行格式异常，跳过: {row}")
+                logger.info(f"数据行格式异常，跳过: {row}")
 
     processed_data = process(json.dumps(table_data, ensure_ascii=False))
     state["apache_chart_data"] = processed_data
@@ -96,7 +103,7 @@ def extract_table_names_sqlglot(sql: str) -> list:
             tables.add(table.name)
         return list(tables)
     except Exception as e:
-        print(f"SQL 解析错误: {e}")
+        logger.info(f"SQL 解析错误: {e}")
         return []
 
 
@@ -111,13 +118,17 @@ def get_column_comments(schema_inspector: dict, table_name: str) -> list:
     try:
 
         table_info = schema_inspector.get(table_name, {})
+        # 兼容表格问答todo
         if not table_info:
-            print(f"表 {table_name} 不存在于 schema 信息中")
+            table_info = schema_inspector
+
+        if not table_info:
+            logger.info(f"未找到表 {table_name} 的信息")
             return []
 
         columns = table_info.get("columns", {})
         if not columns:
-            print(f"表 {table_name} 没有列信息")
+            logger.info(f"表 {table_name} 没有列信息")
             return []
 
         comments = []
@@ -134,5 +145,6 @@ def get_column_comments(schema_inspector: dict, table_name: str) -> list:
                 comments.append("")  # 如果列信息格式不正确，使用空字符串
         return comments
     except Exception as e:
-        print(f"处理表 {table_name} 的列注释时出错: {e}")
+        traceback.print_exception(e)
+        logger.info(f"处理表 {table_name} 的列注释时出错: {e}")
         return []

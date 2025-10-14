@@ -56,6 +56,7 @@ dependencies = [
     "rank-bm25>=0.2.2",
     "jieba>=0.42.1",
     "colorlog>=6.9.0",
+    "faiss-cpu>=1.12.0",
 ]
 
 [[tool.uv.index]]

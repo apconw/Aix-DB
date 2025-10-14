@@ -140,11 +140,11 @@ const onCompletedReader = (index: number) => {
   }
 
   // 查询是推荐列表
-  if (isView.value === false
-    && qa_type.value !== 'COMMON_QA'
-    && qa_type.value !== 'DATABASE_QA') {
-    query_dify_suggested()
-  }
+  // if (isView.value === false
+  //   && qa_type.value !== 'COMMON_QA'
+  //   && qa_type.value !== 'DATABASE_QA') {
+  //   //  query_dify_suggested()
+  // }
 }
 
 // 当前索引位置
@@ -160,14 +160,14 @@ const onChartReady = (index) => {
 
 const onRecycleQa = async (index: number) => {
   // 设置当前选中的问答类型
-  const item = conversationItems.value[index]
+  const item = conversationItems.value[index - 1]
   onAqtiveChange(item.qa_type, item.chat_id)
 
 
   // 清空推荐列表
   suggested_array.value = []
   // 发送问题重新生成
-  handleCreateStylized(item.question)
+  handleCreateStylized(item.question, item.file_key)
   scrollToBottom()
 }
 
@@ -285,7 +285,13 @@ const checkAllFilesUploaded = () => {
 
 
 // 提交对话
-const handleCreateStylized = async (send_text = '') => {
+const handleCreateStylized = async (send_text = '', file_key = []) => {
+  if (qa_type.value === 'REPORT_QA') {
+    window.$ModalMessage.warning('深度搜索功能暂不支持，功能正在开发中..')
+    inputTextString.value = ''
+    return
+  }
+
   // 设置背景颜色
   backgroundColorVariable.value = '#f6f7fb'
 
@@ -329,6 +335,16 @@ const handleCreateStylized = async (send_text = '') => {
     if (!checkAllFilesUploaded()) {
       return
     }
+    upload_file_list = businessStore.file_list
+  }
+
+  // 点击重新跑时 如果有文件key 则使用文件key
+  if (file_key.length > 0) {
+    upload_file_list = file_key
+  }
+
+  // 表格问答 则使用 上传的文件key实现 上传一次多轮对话的效果
+  if (qa_type.value === 'FILEDATA_QA' && businessStore.file_list.length > 0) {
     upload_file_list = businessStore.file_list
   }
 
@@ -654,18 +670,18 @@ const onAqtiveChange = (val, chat_id) => {
 
 // 获取建议问题
 const suggested_array = ref([])
-const query_dify_suggested = async () => {
-  if (!isInit.value) {
-    const res = await GlobalAPI.dify_suggested(uuids.value[qa_type.value])
-    const json = await res.json()
-    if (json?.data?.data !== undefined) {
-      suggested_array.value = json.data.data
-    }
-  }
+// const query_dify_suggested = async () => {
+//   if (!isInit.value) {
+//     const res = await GlobalAPI.dify_suggested(uuids.value[qa_type.value])
+//     const json = await res.json()
+//     if (json?.data?.data !== undefined) {
+//       suggested_array.value = json.data.data
+//     }
+//   }
 
-  // 滚动到底部
-  scrollToBottom()
-}
+//   // 滚动到底部
+//   scrollToBottom()
+// }
 // 建议问题点击事件
 const onSuggested = (index: number) => {
   // 如果是报告问答的建议问题点击后切换到通用对话
@@ -703,6 +719,9 @@ const searchText = ref('')
 const searchChatRef = useTemplateRef('searchChatRef')
 const isFocusSearchChat = ref(false)
 const onFocusSearchChat = () => {
+  if (!showDefaultPage.value) {
+    newChat()
+  }
   isFocusSearchChat.value = true
   nextTick(() => {
     searchChatRef.value?.focus()

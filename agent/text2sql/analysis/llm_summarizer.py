@@ -3,7 +3,7 @@ from datetime import datetime
 
 from langchain.prompts import ChatPromptTemplate
 
-from agent.text2sql.analysis.llm_util import get_llm
+from common.llm_util import get_llm
 from agent.text2sql.state.agent_state import AgentState
 
 logger = logging.getLogger(__name__)

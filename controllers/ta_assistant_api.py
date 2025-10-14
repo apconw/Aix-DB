@@ -1,6 +1,8 @@
 """
 测试助手api
+已废弃
 """
+
 import asyncio
 import logging
 

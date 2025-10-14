@@ -91,7 +91,6 @@ const handleFileUpload = async (fileInfo: ExtendedUploadFileInfo) => {
       if (index !== -1) {
         pendingUploadFileInfoList.value[index].status = 'finished'
         pendingUploadFileInfoList.value[index].percentage = 100
-        // 设置解析后的文件minio key
         businessStore.add_file(result.data)
       }
       window.$ModalMessage.success(`文件上传并解析成功`)

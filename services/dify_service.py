@@ -7,7 +7,8 @@ import traceback
 import aiohttp
 import requests
 
-from agent.langgraph_react_agent import LangGraphReactAgent
+from agent.excel.excel_agent import ExcelAgent
+from agent.common_react_agent import LangGraphReactAgent
 from agent.text2sql.text2_sql_agent import Text2SqlAgent
 from common.exception import MyException
 from constants.code_enum import (
@@ -32,8 +33,9 @@ class QaContext:
         self.chat_id = chat_id
 
 
-agent = LangGraphReactAgent()
+common_agent = LangGraphReactAgent()
 sql_agent = Text2SqlAgent()
+excel_agent = ExcelAgent()
 
 
 class DiFyRequest:
@@ -80,13 +82,15 @@ class DiFyRequest:
 
             # 调用智能体
             if qa_type == DiFyAppEnum.COMMON_QA.value[0]:
-                await agent.run_agent(query, res, chat_id, uuid_str, token, file_list)
+                await common_agent.run_agent(query, res, chat_id, uuid_str, token, file_list)
                 return None
             elif qa_type == DiFyAppEnum.DATABASE_QA.value[0]:
                 await sql_agent.run_agent(query, res, chat_id, uuid_str, token)
                 return None
             elif qa_type == DiFyAppEnum.FILEDATA_QA.value[0]:
-                cleaned_query = file_list[0]["source_file_key"] + "|" + query
+                # cleaned_query = file_list[0]["source_file_key"] + "|" + query
+                await excel_agent.run_excel_agent(cleaned_query, res, chat_id, uuid_str, token, file_list)
+                return None
 
             # 封装问答上下文信息
             qa_context = QaContext(token, cleaned_query, chat_id)

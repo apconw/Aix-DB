@@ -160,7 +160,7 @@ export const fetchConversationHistory = async function fetchConversationHistory(
                   chat_id_str = record[key]
                   break
                 case 'file_key':
-                  console.log(record[key])
+                  // console.log(record[key])
                   if (record[key]) {
                     file_key_json = JSON.parse(record[key])
                   }

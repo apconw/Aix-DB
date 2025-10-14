@@ -1,14 +1,12 @@
-version: '3.8'
-
 services:
   chat-web:
-#    image: apconw/chat-vue3-mvp:1.1.5
-    image: crpi-7xkxsdc0iki61l0q.cn-hangzhou.personal.cr.aliyuncs.com/apconw/chat-vue3-mvp:1.1.8
+    image: crpi-7xkxsdc0iki61l0q.cn-hangzhou.personal.cr.aliyuncs.com/apconw/chat-vue3-mvp:1.1.9
     container_name: chat-vue3-mvp
     environment:
-      - TZ=Asia/Shanghai
+      DOCKER_HOST_INTERNAL: ${DOCKER_HOST_INTERNAL:-}
+      TZ: Asia/Shanghai
     volumes:
-      - ./nginx.conf:/etc/nginx/conf.d/nginx.conf
+      - ./nginx.conf.template:/etc/nginx/conf.d/nginx.conf.template
     ports:
       - "8081:80"
     extra_hosts:
@@ -30,32 +28,34 @@ services:
     command: server /data --console-address ":9001"
 
   chat-service:
-#    image: apconw/sanic-web:1.1.5
-    image: crpi-7xkxsdc0iki61l0q.cn-hangzhou.personal.cr.aliyuncs.com/apconw/sanic-web:1.1.8
+    image: crpi-7xkxsdc0iki61l0q.cn-hangzhou.personal.cr.aliyuncs.com/apconw/sanic-web:1.1.9
     container_name: sanic-web
     environment:
-      - MYSQL_HOST=host.docker.internal
-      - MYSQL_PORT=13006
-      - MYSQL_USER=root
-      - MYSQL_PASSWORD=1
-      - MYSQL_DATABASE=chat_db
-      - SQLALCHEMY_DATABASE_URI=mysql+pymysql://root:1@host.docker.internal:13006/chat_db
-      - DIFY_SERVER_URL=http://host.docker.internal:18000
-      - DIFY_DATABASE_QA_API_KEY=app-GIz9dM9GPUXVZOkDRaC0TOxh
-      - MINIO_ENDPOINT=host.docker.internal:19000
-      - MINIO_ACCESS_KEY=QfIx8FgdpgKtmbFMbKVb
-      - MiNIO_SECRET_KEY=DsitWZJT3pecrg020Y2NKCETVpsIc3h2PrKTqONA
-      - MODEL_BASE_URL=https://dashscope.aliyuncs.com/compatible-mode/v1
-      - MODEL_NAME=qwen-plus
-      - MODEL_TEMPERATURE=0.75
-      - MODEL_API_KEY=sk-xxxx
-      - MCP_HUB_COMMON_QA_GROUP_URL=http://host.docker.internal:3300/mcp/fa7646b4-1679-4d1d-9bda-3e9190cfef1a
-      - MCP_HUB_DATABASE_QA_GROUP_URL=http://host.docker.internal:3300/mcp/f635fd21-2f44-4a99-8a92-f778b4d3607f
-      - SHOW_THINKING_PROCESS=true
-      - NEO4J_URI=bolt://host.docker.internal:7687
-      - NEO4J_USER=neo4j
-      - NEO4J_PASSWORD=neo4j123
-      - TZ=Asia/Shanghai
+      SERVER_PORT: ${SERVER_PORT:-8088}
+      SERVER_WORKERS: ${SERVER_WORKERS:-2}
+      MYSQL_HOST: ${MYSQL_HOST:-}
+      MYSQL_PORT: ${MYSQL_PORT:-}
+      MYSQL_USER: ${MYSQL_USER:-}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-}
+      SQLALCHEMY_DATABASE_URI: ${SQLALCHEMY_DATABASE_URI:-}
+      DIFY_SERVER_URL: ${DIFY_SERVER_URL:-}
+      DIFY_DATABASE_QA_API_KEY: ${DIFY_DATABASE_QA_API_KEY:-}
+      MINIO_ENDPOINT: ${MINIO_ENDPOINT:-}:${MINIO_PORT:-}
+      MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY:-}
+      MiNIO_SECRET_KEY: ${MiNIO_SECRET_KEY:-}
+      MODEL_BASE_URL: ${MODEL_BASE_URL:-}
+      MODEL_NAME: ${MODEL_NAME:-}
+      MODEL_TEMPERATURE: ${MODEL_TEMPERATURE:-}
+      MODEL_API_KEY: ${MODEL_API_KEY:-}
+      MCP_HUB_COMMON_QA_GROUP_URL: ${MCP_HUB_COMMON_QA_GROUP_URL:-}
+      MCP_HUB_DATABASE_QA_GROUP_URL: ${MCP_HUB_DATABASE_QA_GROUP_URL:-}
+      SHOW_THINKING_PROCESS: ${SHOW_THINKING_PROCESS:-}
+      NEO4J_URI: ${NEO4J_URI:-}
+      NEO4J_USER: ${NEO4J_USER:-}
+      NEO4J_PASSWORD: ${NEO4J_PASSWORD:-}
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY:-}
+      TZ: Asia/Shanghai
     ports:
       - "8088:8088"
     extra_hosts:
@@ -76,13 +76,12 @@ services:
       - ./my.cnf:/etc/mysql/conf.d/my.cnf
 
   mcphub:
-    image: samanhappy/mcphub:0.9.0
+    image: samanhappy/mcphub:0.9.12
     container_name: mcphub
     ports:
       - "3300:3000"
     volumes:
       - ./volume/mcp-data/mcp_settings.json:/app/mcp_settings.json
-      - ./volume/mcp-data/data:/app/data
     extra_hosts:
       - "host.docker.internal:host-gateway"
 
@@ -92,13 +91,13 @@ services:
     ports:
       - "3100:3000"
     environment:
-      MINIO_ENDPOINT: host.docker.internal
-      MINIO_PORT: 19000
       MINIO_USE_SSL: "false"
-      MINIO_ACCESS_KEY: QfIx8FgdpgKtmbFMbKVb
-      MINIO_SECRET_KEY: DsitWZJT3pecrg020Y2NKCETVpsIc3h2PrKTqONA
-      MINIO_BUCKET: chart-images
-      MINIO_PUBLIC_DOMAIN: "http://localhost:19000"
+      MINIO_PORT: ${MINIO_PORT:-}
+      MINIO_ENDPOINT: ${MINIO_ENDPOINT:-}
+      MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY:-}
+      MINIO_SECRET_KEY: ${MiNIO_SECRET_KEY:-}
+      MINIO_BUCKET: ${MINIO_BUCKET:-}
+      MINIO_PUBLIC_DOMAIN: ${MINIO_PUBLIC_DOMAIN:-}
     extra_hosts:
       - "host.docker.internal:host-gateway"
 

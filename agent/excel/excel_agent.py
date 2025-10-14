@@ -2,21 +2,22 @@ import asyncio
 import json
 import logging
 import os
-from typing import Dict, Any, Optional
+import traceback
+from typing import Optional, Dict, Any
 
 from langgraph.graph.state import CompiledStateGraph
 
-from agent.text2sql.analysis.graph import create_graph
-from agent.text2sql.state.agent_state import AgentState
-from constants.code_enum import DataTypeEnum, DiFyAppEnum
-from services.user_service import add_user_record, decode_jwt_token
+from agent.excel.excel_agent_state import ExcelAgentState
+from agent.excel.excel_graph import create_excel_graph
+from constants.code_enum import DataTypeEnum
+from services.user_service import decode_jwt_token, add_user_record, query_user_qa_record
 
 logger = logging.getLogger(__name__)
 
 
-class Text2SqlAgent:
+class ExcelAgent:
     """
-    文本语言转SQL代理
+    表格问答智能体
     """
 
     def __init__(self):
@@ -25,26 +26,47 @@ class Text2SqlAgent:
         # 获取环境变量控制是否显示思考过程，默认为开启
         self.show_thinking_process = os.getenv("SHOW_THINKING_PROCESS", "true").lower() == "true"
 
-    async def run_agent(
-        self, query: str, response=None, chat_id: str = None, uuid_str: str = None, user_token=None
+    async def run_excel_agent(
+        self,
+        query: str,
+        response=None,
+        chat_id: str = None,
+        uuid_str: str = None,
+        user_token=None,
+        file_list: list = None,
     ) -> None:
         """
-        运行智能体
-        :param query: 用户输入
-        :param response: 响应对象
-        :param chat_id: 会话ID，用于区分同一轮对话
-        :param uuid_str: 自定义ID，用于唯一标识一次问答
-        :param user_token: 用户登录的token
-        "summarize", "data_render", "data_render_apache" 节点数据正常显示不包裹在<details>中
-        :return: None
+        运行表格智能体
+        :param query:
+        :param response:
+        :param chat_id:
+        :param uuid_str:
+        :param user_token:
+        :param file_list
+        :return:
         """
         t02_answer_data = []
         t04_answer_data = {}
         current_step = None
 
+        # 实现上传一次多次对话的效果 默认单轮对话取最新上传的文件
+        if file_list is None:
+            user_qa_record = query_user_qa_record(chat_id)[0]
+            if user_qa_record:
+                file_list = json.loads(user_qa_record["file_key"])
         try:
-            initial_state = AgentState(user_query=query, attempts=0, correct_attempts=0)
-            graph: CompiledStateGraph = create_graph()
+            initial_state = ExcelAgentState(
+                user_query=query,
+                file_list=file_list,
+                db_info="",
+                generated_sql="",
+                chart_url="",
+                chart_type="",
+                apache_chart_data={},
+                execution_result=[],
+                report_summary="",
+            )
+            graph: CompiledStateGraph = create_excel_graph()
 
             # 获取用户信息 标识对话状态
             user_dict = await decode_jwt_token(user_token)
@@ -53,7 +75,6 @@ class Text2SqlAgent:
             self.running_tasks[task_id] = task_context
 
             async for chunk_dict in graph.astream(initial_state, stream_mode="updates"):
-
                 # 检查是否已取消
                 if self.running_tasks[task_id]["cancelled"]:
                     if self.show_thinking_process:
@@ -93,16 +114,17 @@ class Text2SqlAgent:
                     query,
                     t02_answer_data,
                     t04_answer_data,
-                    DiFyAppEnum.DATABASE_QA.value[0],
+                    "FILEDATA_QA",
                     user_token,
-                    {},
+                    file_list,
                 )
 
         except asyncio.CancelledError:
             await response.write(self._create_response("\n> 这条消息已停止", "info", DataTypeEnum.ANSWER.value[0]))
             await response.write(self._create_response("", "end", DataTypeEnum.STREAM_END.value[0]))
         except Exception as e:
-            logger.error(f"Error in run_agent: {str(e)}", exc_info=True)
+            traceback.print_exception(e)
+            logger.error(f"表格问答智能体运行异常: {e}")
             error_msg = f"处理过程中发生错误: {str(e)}"
             await self._send_response(response, error_msg, "error")
 
@@ -159,14 +181,12 @@ class Text2SqlAgent:
         处理各个步骤的内容
         """
         content_map = {
-            "schema_inspector": lambda: self._format_db_info(step_value["db_info"]),
-            # "llm_reasoning": lambda: step_value["sql_reasoning"],
-            "table_relationship": lambda: json.dumps(step_value["table_relationship"], ensure_ascii=False),
+            "excel_parsing": lambda: self._format_table_columns_info(step_value),
             "sql_generator": lambda: step_value["generated_sql"],
             "sql_executor": lambda: "执行sql语句成功" if step_value["execution_result"].success else "执行sql语句失败",
-            "summarize": lambda: step_value["report_summary"],
-            "data_render": lambda: step_value["chart_url"],
-            "data_render_apache": lambda: step_value["apache_chart_data"],
+            "summarize": lambda: step_value.get("report_summary", ""),
+            "data_render": lambda: step_value.get("chart_url", ""),
+            "data_render_apache": lambda: step_value.get("apache_chart_data", {}),
         }
 
         if step_name in content_map:
@@ -191,35 +211,13 @@ class Text2SqlAgent:
             # 这里设置 Apache 表格数据
             if step_name == "data_render_apache" and data_type == DataTypeEnum.BUS_DATA.value[0]:
                 t04_answer_data.clear()
-                t04_answer_data.update({"data": step_value["apache_chart_data"], "dataType": data_type})
+                t04_answer_data.update({"data": step_value.get("apache_chart_data", {}), "dataType": data_type})
 
             # 对于非渲染步骤，刷新响应
             if step_name not in ["data_render", "data_render_apache"]:
                 if hasattr(response, "flush"):
                     await response.flush()
                 await asyncio.sleep(0)
-
-    @staticmethod
-    def _format_db_info(db_info: Dict[str, Any]) -> str:
-        """
-        格式化数据库信息，包含表名和注释
-        :param db_info: 数据库信息
-        :return: 格式化后的字符串
-        """
-        if not db_info:
-            return "共检索0张表."
-
-        table_descriptions = []
-        for table_name, table_info in db_info.items():
-            # 获取表注释
-            table_comment = table_info.get("table_comment", "")
-            if table_comment:
-                table_descriptions.append(f"{table_name}({table_comment})")
-            else:
-                table_descriptions.append(table_name)
-
-        tables_str = "、".join(table_descriptions)
-        return f"共检索{len(db_info)}张表: {tables_str}."
 
     @staticmethod
     async def _send_response(
@@ -266,3 +264,28 @@ class Text2SqlAgent:
             self.running_tasks[task_id]["cancelled"] = True
             return True
         return False
+
+    @staticmethod
+    def _format_table_columns_info(db_info: Dict[str, Any]) -> str:
+        """
+        格式化表格列信息为HTML details标签格式
+        :param db_info: 数据库信息字典
+        :return: 格式化后的HTML字符串
+        """
+        db_info = db_info["db_info"]
+        if not db_info or "columns" not in db_info:
+            return ""
+
+        columns_info = db_info["columns"]
+
+        html_content = """
+        <ul>
+        """
+        for column_name, column_details in columns_info.items():
+            comment = column_details.get("comment", column_name)
+            type_ = column_details.get("type", "未知")
+            html_content += f"<li><strong>{column_name}</strong>: {comment} (类型: {type_})</li>\n"
+
+        html_content += """</ul>"""
+
+        return html_content
