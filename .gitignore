@@ -15,7 +15,6 @@ docker/dify/volumes/*
 
 
 docker/deploy.log
-
 web/node_modules/
 web/dist/
 
@@ -25,3 +24,4 @@ web/dist/
 logs/
 # 环境变量文件
 .pytest_cache/
+/vector_index/
