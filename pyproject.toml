@@ -68,6 +68,7 @@ dependencies = [
     "yfinance>=0.2.66",
     "anthropic>=0.75.0",
     "claude-agent-sdk>=0.1.16",
+    "pymysql>=1.1.2",
 ]
 
 [[tool.uv.index]]

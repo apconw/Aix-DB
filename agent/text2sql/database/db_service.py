@@ -1,5 +1,10 @@
 import warnings
 
+from sqlalchemy import create_engine
+
+from common.datasource_util import DatasourceConfigUtil, DatasourceConnectionUtil
+from model import Datasource
+
 warnings.filterwarnings("ignore", message=".*pkg_resources.*deprecated.*")
 
 import hashlib
@@ -41,53 +46,43 @@ os.makedirs(VECTOR_INDEX_DIR, exist_ok=True)
 INDEX_FILE = os.path.join(VECTOR_INDEX_DIR, "schema.index")
 METADATA_FILE = os.path.join(VECTOR_INDEX_DIR, "metadata.json")
 
+
 # 嵌入模型配置
 def get_embedding_model_config():
     with db_pool.get_session() as session:
         # model_type: 2 -> Embedding
-        model = session.query(TAiModel).filter(
-            TAiModel.model_type == 2,
-            TAiModel.default_model == True
-        ).first()
-        
+        model = session.query(TAiModel).filter(TAiModel.model_type == 2, TAiModel.default_model == True).first()
+
         if not model:
             # Fallback or raise error?
             # Trying to find ANY embedding model if default not set
             model = session.query(TAiModel).filter(TAiModel.model_type == 2).first()
-        
+
         if not model:
             raise ValueError("未配置嵌入模型 (Embedding Model)")
-            
-        return {
-            "name": model.base_model,
-            "api_key": model.api_key,
-            "base_url": model.api_domain
-        }
+
+        return {"name": model.base_model, "api_key": model.api_key, "base_url": model.api_domain}
+
 
 # 重排模型配置
 def get_rerank_model_config():
     with db_pool.get_session() as session:
         # model_type: 3 -> Rerank
-        model = session.query(TAiModel).filter(
-            TAiModel.model_type == 3,
-            TAiModel.default_model == True
-        ).first()
-        
+        model = session.query(TAiModel).filter(TAiModel.model_type == 3, TAiModel.default_model == True).first()
+
         if not model:
             # Fallback
             model = session.query(TAiModel).filter(TAiModel.model_type == 3).first()
-            
+
         if not model:
             return None
-            
-        return {
-            "name": model.base_model,
-            "api_key": model.api_key,
-            "base_url": model.api_domain
-        }
+
+        return {"name": model.base_model, "api_key": model.api_key, "base_url": model.api_domain}
+
 
 # 全局变量占位，实际使用时动态获取或在 init 中初始化
 # 但为了保持兼容性，这里我们使用 lazy initialization 或者 property
+
 
 class DatabaseService:
     """
@@ -95,27 +90,39 @@ class DatabaseService:
     提供表结构检索、SQL 执行、错误修正 SQL 执行等功能。
     """
 
-    def __init__(self):
-        self._engine = db_pool.get_engine()
+    def __init__(self, datasource_id: int = None):
+        self._engine = None
+        if datasource_id:
+            try:
+                with db_pool.get_session() as session:
+                    ds = session.query(Datasource).filter(Datasource.id == datasource_id).first()
+                    if ds:
+                        config = DatasourceConfigUtil.decrypt_config(ds.configuration)
+                        uri = DatasourceConnectionUtil.build_connection_uri(ds.type, config)
+                        self._engine = create_engine(uri)
+                        logger.info(f"Initialized DatabaseService with datasource_id: {datasource_id}")
+            except Exception as e:
+                logger.error(f"Failed to initialize datasource {datasource_id}: {e}")
+
+        if not self._engine:
+            self._engine = db_pool.get_engine()
+
         self._faiss_index: Optional[faiss.Index] = None
         self._table_names: List[str] = []
         self._corpus: List[str] = []
         self._tokenized_corpus: List[List[str]] = []
         self._index_initialized: bool = False
         self.USE_RERANKER: bool = True  # 是否启用重排序器
-        
+
         # Initialize clients lazily or now
         try:
             emb_config = get_embedding_model_config()
             self.embedding_model_name = emb_config["name"]
-            self.embedding_client = OpenAI(
-                api_key=emb_config["api_key"] or "empty", 
-                base_url=emb_config["base_url"]
-            )
+            self.embedding_client = OpenAI(api_key=emb_config["api_key"] or "empty", base_url=emb_config["base_url"])
         except Exception as e:
             logger.error(f"初始化嵌入模型失败: {e}")
             self.embedding_client = None
-            
+
         try:
             rerank_config = get_rerank_model_config()
             if rerank_config:
@@ -282,9 +289,9 @@ class DatabaseService:
         使用 DashScope API 生成文本嵌入向量。
         """
         if not self.embedding_client:
-             logger.error("❌ 嵌入模型未初始化")
-             return np.array([])
-             
+            logger.error("❌ 嵌入模型未初始化")
+            return np.array([])
+
         logger.info(f"🌐 调用嵌入模型 {self.embedding_model_name}...")
         start_time = time.time()
         embeddings = []
@@ -323,10 +330,10 @@ class DatabaseService:
 
         # 生成嵌入
         embeddings = self._create_embeddings_with_dashscope(self._corpus)
-        
+
         if embeddings.size == 0:
-             logger.error("❌ 无法生成嵌入，索引构建失败")
-             return
+            logger.error("❌ 无法生成嵌入，索引构建失败")
+            return
 
         # 初始化 FAISS 索引
         dimension = embeddings.shape[1]
@@ -345,9 +352,9 @@ class DatabaseService:
         使用向量相似度检索最相关的表。
         """
         if not self.embedding_client or not self._faiss_index:
-             logger.error("❌ 向量检索服务不可用")
-             return []
-             
+            logger.error("❌ 向量检索服务不可用")
+            return []
+
         try:
             response = self.embedding_client.embeddings.create(model=self.embedding_model_name, input=query)
             query_vec = np.array([response.data[0].embedding]).astype("float32")
@@ -580,8 +587,7 @@ class DatabaseService:
 
         return state
 
-    @staticmethod
-    def execute_sql(state: AgentState) -> AgentState:
+    def execute_sql(self, state: AgentState) -> AgentState:
         """
         执行生成的 SQL 语句。
         """
@@ -594,8 +600,8 @@ class DatabaseService:
 
         logger.info("▶️ 执行 SQL 语句")
         try:
-            with db_pool.get_session() as session:
-                result = session.execute(text(generated_sql))
+            with self._engine.connect() as connection:
+                result = connection.execute(text(generated_sql))
                 result_data = result.fetchall()
                 columns = result.keys()
                 frame = pd.DataFrame(result_data, columns=columns)

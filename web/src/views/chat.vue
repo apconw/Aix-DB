@@ -3,6 +3,7 @@ import type { InputInst, UploadFileInfo } from 'naive-ui'
 // Import Cookies to clear token on logout
 import { UAParser } from 'ua-parser-js'
 import * as GlobalAPI from '@/api'
+import { fetch_datasource_list } from '@/api/datasource'
 import { isMockDevelopment } from '@/config'
 import SideBar from '../components/Navigation/SideBar.vue'
 import DefaultPage from './DefaultPage.vue'
@@ -398,6 +399,7 @@ const handleCreateStylized = async (
         writer_oid: currentChatId.value,
         file_list: upload_file_list,
         qa_type: currentQaType, // Pass qa_type explicitly
+        datasource_id: selectedDatasource.value?.id,
       },
     )
 
@@ -737,6 +739,10 @@ const backgroundColorVariable = ref('#ffffff')
 const showScrollToBottom = ref(false)
 const scrollThreshold = 1000 // 滚动超过100px时显示按钮
 
+const datasourceList = ref<any[]>([])
+const selectedDatasource = ref<any>(null)
+const showDatasourcePopover = ref(false)
+
 // 用户点击图标滚动到底部
 const clickScrollToBottom = () => {
   nextTick(() => {
@@ -761,9 +767,19 @@ const handleScroll = () => {
 }
 
 // 在 onMounted 或 onBeforeMount 中添加事件监听
-onMounted(() => {
+onMounted(async () => {
   if (messagesContainer.value) {
     messagesContainer.value.addEventListener('scroll', handleScroll)
+  }
+  try {
+    const res = await fetch_datasource_list()
+    if (res.ok) {
+      const data = await res.json()
+      datasourceList.value = data.data || []
+    }
+  }
+  catch (e) {
+    console.error(e)
   }
 })
 
@@ -786,9 +802,16 @@ const fileUploadRef = ref<FileUploadRef | null>(null)
 const pendingUploadFileInfoList = ref([])
 
 // 新增：处理从DefaultPage来的提交
-const handleSubmitFromDefaultPage = (payload: { text: string, mode: string }) => {
+const handleSubmitFromDefaultPage = (payload: { text: string, mode: string, datasource_id?: number }) => {
   onAqtiveChange(payload.mode, '') // Switch mode
   inputTextString.value = payload.text // Set text
+  
+  if (payload.datasource_id) {
+     const ds = datasourceList.value.find((d) => d.id === payload.datasource_id)
+     if (ds) {
+         selectedDatasource.value = ds
+     }
+  }
 
   // Pass a copy of the file list to avoid it being cleared if store is cleared
   const currentFiles = [...businessStore.file_list]
@@ -812,11 +835,18 @@ const showModeSelector = ref(false)
 const clearMode = () => {
   // Switch to selection mode
   showModeSelector.value = true
+  selectedDatasource.value = null
 }
 
 const selectMode = (mode: string) => {
   onAqtiveChange(mode, '')
   showModeSelector.value = false
+}
+
+const handleDatasourceSelect = (ds: any) => {
+  selectedDatasource.value = ds
+  selectMode('DATABASE_QA')
+  showDatasourcePopover.value = false
 }
 
 // Navigation Rail Items - REMOVED
@@ -1217,6 +1247,12 @@ const handleHistoryClick = async (item: any) => {
                       class="text-16"
                     ></div>
                     <span class="font-medium">{{ currentQaOption.label }}</span>
+                    <span
+                      v-if="currentQaOption.value === 'DATABASE_QA' && selectedDatasource"
+                      class="font-medium ml-1"
+                    >
+                      | {{ selectedDatasource.name }}
+                    </span>
                     <div
                       class="i-hugeicons:cancel-01 text-14 ml-1 cursor-pointer opacity-60 hover:opacity-100"
                       @click="clearMode"
@@ -1226,31 +1262,98 @@ const handleHistoryClick = async (item: any) => {
                     v-else
                     class="flex items-center gap-2"
                   >
-                    <n-tooltip
+                    <template
                       v-for="opt in qaOptions"
                       :key="opt.value"
-                      trigger="hover"
                     >
-                      <template #trigger>
-                        <div
-                          class="mode-icon-btn"
-                          :class="{ active: qa_type === opt.value }"
-                          :style="{
-                            '--active-color': opt.color,
-                            '--active-bg': `${opt.color}15`,
-                          }"
-                          @click.stop="selectMode(opt.value)"
+                        <n-popover
+                          v-if="opt.value === 'DATABASE_QA'"
+                          trigger="manual"
+                          v-model:show="showDatasourcePopover"
+                          placement="top"
+                          :show-arrow="false"
+                          class="!p-0"
+                          style="padding: 0;"
+                          @clickoutside="showDatasourcePopover = false"
                         >
+                          <template #trigger>
+                            <div
+                              class="mode-icon-btn"
+                              :class="{ active: qa_type === opt.value || showDatasourcePopover }"
+                              :style="{
+                                '--active-color': opt.color,
+                                '--active-bg': `${opt.color}15`,
+                              }"
+                              @click.stop="showDatasourcePopover = true"
+                            >
+                              <div
+                                :class="opt.icon"
+                                class="text-14"
+                                :style="{ color: opt.color }"
+                              ></div>
+                              <span class="mode-icon-label">{{ opt.label }}</span>
+                              <div v-if="opt.value === 'DATABASE_QA'" class="i-hugeicons:arrow-down-01 text-12 text-gray-400 ml-1"></div>
+                            </div>
+                          </template>
+                          <div class="flex flex-col min-w-[180px] max-w-[240px] bg-white rounded-xl shadow-2xl border border-gray-100 p-2">
+                            <div class="max-h-[320px] overflow-y-auto custom-scrollbar pr-1">
+                              <div
+                                v-for="ds in datasourceList"
+                                :key="ds.id"
+                                class="group flex items-center gap-3 px-3 py-2.5 mb-1 last:mb-0 hover:bg-[#F5F3FF] cursor-pointer rounded-lg transition-all duration-200 border border-transparent hover:border-[#DDD6FE]"
+                                :class="{ 'bg-[#F5F3FF] border-[#DDD6FE]': selectedDatasource?.id === ds.id }"
+                                @click="handleDatasourceSelect(ds)"
+                              >
+                                <div 
+                                  class="flex-shrink-0 w-8 h-8 rounded-lg bg-gray-50 flex items-center justify-center group-hover:bg-white transition-colors"
+                                  :class="{ 'bg-white': selectedDatasource?.id === ds.id }"
+                                >
+                                  <div class="i-hugeicons:database-01 text-16 text-gray-400 group-hover:text-[#7E6BF2]" :class="{ 'text-[#7E6BF2]': selectedDatasource?.id === ds.id }"></div>
+                                </div>
+                                <div class="flex flex-col flex-1 min-w-0">
+                                  <span class="text-14 text-gray-700 font-semibold group-hover:text-[#7E6BF2] truncate" :class="{ 'text-[#7E6BF2]': selectedDatasource?.id === ds.id }" :title="ds.name">
+                                    {{ ds.name }}
+                                  </span>
+                                  <span class="text-11 text-gray-400 truncate">{{ ds.type || 'Datasource' }}</span>
+                                </div>
+                                <div v-if="selectedDatasource?.id === ds.id" class="flex-shrink-0">
+                                  <div class="i-hugeicons:tick-02 text-16 text-[#7E6BF2]"></div>
+                                </div>
+                              </div>
+
+                              <div v-if="!datasourceList.length" class="flex flex-col items-center justify-center py-10 text-gray-400 gap-2">
+                                <div class="i-hugeicons:database-01 text-24 opacity-20"></div>
+                                <span class="text-13">暂无可用数据源</span>
+                              </div>
+                            </div>
+                          </div>
+                        </n-popover>
+
+                      <n-tooltip
+                        v-else
+                        trigger="hover"
+                      >
+                        <template #trigger>
                           <div
-                            :class="opt.icon"
-                            class="text-14"
-                            :style="{ color: opt.color }"
-                          ></div>
-                          <span class="mode-icon-label">{{ opt.label }}</span>
-                        </div>
-                      </template>
-                      {{ opt.label }}
-                    </n-tooltip>
+                            class="mode-icon-btn"
+                            :class="{ active: qa_type === opt.value }"
+                            :style="{
+                              '--active-color': opt.color,
+                              '--active-bg': `${opt.color}15`,
+                            }"
+                            @click.stop="selectMode(opt.value)"
+                          >
+                            <div
+                              :class="opt.icon"
+                              class="text-14"
+                              :style="{ color: opt.color }"
+                            ></div>
+                            <span class="mode-icon-label">{{ opt.label }}</span>
+                          </div>
+                        </template>
+                        {{ opt.label }}
+                      </n-tooltip>
+                    </template>
                   </div>
                 </div>
 
@@ -1422,28 +1525,28 @@ const handleHistoryClick = async (item: any) => {
 }
 
 .mode-icon-btn {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 6px 12px;
-  border-radius: 20px;
-  font-size: 13px;
-  color: #64748b;
-  cursor: pointer;
-  transition: all 0.2s;
-  background-color: #f8fafc;
-  border: 1px solid transparent;
-
-  &:hover {
-    background-color: #f1f5f9;
-    color: #334155;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 13px;
+    color: #64748b;
+    cursor: pointer;
+    transition: all 0.2s;
+    background-color: #f8fafc;
+    border: 1px solid transparent;
+  
+    &:hover, &.active {
+      background-color: #f1f5f9;
+      color: #334155;
+    }
+  
+    &.active {
+      color: var(--active-color);
+      background-color: var(--active-bg);
+    }
   }
-
-  &.active {
-    color: var(--active-color);
-    background-color: var(--active-bg);
-  }
-}
 
 .mode-icon-label {
   font-size: 13px;

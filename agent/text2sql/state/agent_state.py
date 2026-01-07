@@ -66,3 +66,4 @@ class AgentState(TypedDict):
     chart_url: Optional[str]  # AntV MCP图表地址
     chart_type: Optional[str]  # 图表类型
     apache_chart_data: Optional[Dict[str, Any]]  # Apache图表数据
+    datasource_id: Optional[int]  # 数据源ID

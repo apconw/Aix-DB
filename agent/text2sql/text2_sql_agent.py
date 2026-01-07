@@ -36,6 +36,7 @@ class Text2SqlAgent:
         chat_id: str = None,
         uuid_str: str = None,
         user_token=None,
+        datasource_id: int = None,
     ) -> None:
         """
         运行智能体
@@ -44,6 +45,7 @@ class Text2SqlAgent:
         :param chat_id: 会话ID，用于区分同一轮对话
         :param uuid_str: 自定义ID，用于唯一标识一次问答
         :param user_token: 用户登录的token
+        :param datasource_id: 数据源ID
         :return: None
         """
         t02_answer_data = []
@@ -51,8 +53,8 @@ class Text2SqlAgent:
         current_step = None
 
         try:
-            initial_state = AgentState(user_query=query, attempts=0, correct_attempts=0)
-            graph: CompiledStateGraph = create_graph()
+            initial_state = AgentState(user_query=query, attempts=0, correct_attempts=0, datasource_id=datasource_id)
+            graph: CompiledStateGraph = create_graph(datasource_id)
 
             # 获取用户信息 标识对话状态
             user_dict = await decode_jwt_token(user_token)

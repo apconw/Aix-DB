@@ -73,6 +73,7 @@ class LLMRequest:
 
             # 获取文件列表
             file_list = req_obj.get("file_list")
+            datasource_id = req_obj.get("datasource_id")
 
             #  使用正则表达式移除所有空白字符（包括空格、制表符、换行符等）
             query = req_obj.get("query")
@@ -91,7 +92,7 @@ class LLMRequest:
                 await common_agent.run_agent(query, res, chat_id, uuid_str, token, file_list)
                 return None
             elif qa_type == IntentEnum.DATABASE_QA.value[0]:
-                await sql_agent.run_agent(query, res, chat_id, uuid_str, token)
+                await sql_agent.run_agent(query, res, chat_id, uuid_str, token, datasource_id)
                 return None
             elif qa_type == IntentEnum.FILEDATA_QA.value[0]:
                 await excel_agent.run_excel_agent(cleaned_query, res, chat_id, uuid_str, token, file_list)

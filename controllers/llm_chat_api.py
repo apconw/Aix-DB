@@ -11,7 +11,7 @@ from constants.code_enum import SysCodeEnum
 from common.param_parser import parse_params
 from services.llm_service import query_dify_suggested, stop_dify_chat, LLMRequest
 from model.schemas import (
-    DifyGetAnswerRequest,
+    LLMGetAnswerRequest,
     DifyGetSuggestedRequest,
     DifyGetSuggestedResponse,
     StopChatRequest,
@@ -31,7 +31,7 @@ llm = LLMRequest()
 @openapi.body(
     {
         "application/json": {
-            "schema": get_schema(DifyGetAnswerRequest),
+            "schema": get_schema(LLMGetAnswerRequest),
         }
     },
     description="查询请求体",
@@ -44,7 +44,7 @@ llm = LLMRequest()
 )
 @check_token
 @parse_params
-async def get_answer(req: Request, body: DifyGetAnswerRequest):
+async def get_answer(req: Request, body: LLMGetAnswerRequest):
     """
     调用diFy画布获取数据流式返回
     :param req: 请求对象

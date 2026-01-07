@@ -5,7 +5,7 @@
 /**
  * Event Stream 调用大模型接口 Ollama3 (Fetch 调用)
  */
-export async function createOllama3Stylized(text, qa_type, uuid, chat_id, file_list) {
+export async function createOllama3Stylized(text, qa_type, uuid, chat_id, file_list, datasource_id) {
   const userStore = useUserStore()
   const token = userStore.getUserToken()
   const url = new URL(`${location.origin}/sanic/dify/get_answer`)
@@ -41,6 +41,7 @@ export async function createOllama3Stylized(text, qa_type, uuid, chat_id, file_l
       uuid,
       chat_id,
       file_list,
+      datasource_id,
     }),
     signal: controller.signal, // 添加超时信号
   })

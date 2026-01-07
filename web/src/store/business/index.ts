@@ -79,6 +79,7 @@ export const useBusinessStore = defineStore('business-store', {
         const query_str = data.text
         const file_list = data.file_list
         const qa_type = data.qa_type || this.qa_type
+        const datasource_id = data.datasource_id
         const processResponse = (res) => {
           if (res.status === 401) {
             // 登录失效
@@ -159,7 +160,7 @@ export const useBusinessStore = defineStore('business-store', {
         }
 
         // 调用后端接口拿大模型结果
-        GlobalAPI.createOllama3Stylized(query_str, qa_type, uuid, chat_id, file_list)
+        GlobalAPI.createOllama3Stylized(query_str, qa_type, uuid, chat_id, file_list, datasource_id)
           .then((res) => resolve(processResponse(res)))
           .catch((err) => {
             console.error('Request failed:', err)

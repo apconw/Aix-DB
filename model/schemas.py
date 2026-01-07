@@ -384,14 +384,15 @@ class DeleteUserRequest(BaseModel):
 
 
 # ==================== Dify 服务相关模型 ====================
-class DifyGetAnswerRequest(BaseModel):
-    """获取Dify答案请求"""
+class LLMGetAnswerRequest(BaseModel):
+    """获取LLM答案请求"""
 
     query: str = Field(description="查询内容")
     chat_id: str = Field(description="聊天ID")
     uuid: str = Field(description="uuid")
     qa_type: str = Field(description="问答类型")
     file_list: List[Dict] = Field(default_factory=list, description="文件列表")
+    datasource_id: Optional[int] = Field(None, description="数据源ID")
 
 
 class DifyGetSuggestedRequest(BaseModel):
@@ -496,26 +497,31 @@ class AiModelItem(BaseModel):
     protocol: int = Field(default=1, description="协议")
     default_model: bool = Field(False, description="是否默认")
 
+
 class AiModelConfigItem(BaseModel):
     key: str = Field(description="配置Key")
     val: Any = Field(description="配置Value")
     name: Optional[str] = Field(None, description="配置名称")
+
 
 class AiModelCreator(AiModelItem):
     api_domain: str = Field(description="API域名")
     api_key: str = Field(description="API Key")
     config_list: List[AiModelConfigItem] = Field(default=[], description="额外配置列表")
 
+
 class AiModelEditor(AiModelCreator):
     id: int = Field(description="模型ID")
+
 
 class AiModelGridItem(AiModelItem):
     id: int = Field(description="模型ID")
     create_time: int = Field(description="创建时间")
 
+
 class AiModelListResponse(BaseResponse):
     data: List[AiModelGridItem] = Field(description="模型列表")
 
+
 class AiModelDetailResponse(BaseResponse):
     data: AiModelEditor = Field(description="模型详情")
-

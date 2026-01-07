@@ -27,12 +27,12 @@ def data_render_condition(state: AgentState) -> str:
     return "data_render"
 
 
-def create_graph():
+def create_graph(datasource_id: int = None):
     """
     :return:
     """
     graph = StateGraph(AgentState)
-    db_service = DatabaseService()
+    db_service = DatabaseService(datasource_id)
 
     graph.add_node("schema_inspector", db_service.get_table_schema)
     # graph.add_node("llm_reasoning", create_reasoning_steps)
