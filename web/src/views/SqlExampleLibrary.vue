@@ -1,8 +1,9 @@
 <script lang="ts" setup>
 import { onMounted, ref, reactive, h, resolveComponent } from 'vue'
 import { trainingApi } from '@/api/training'
-import { useMessage, useDialog, NButton, NSwitch, NSpace, FormInst } from 'naive-ui'
+import { useMessage, useDialog, NButton, NSwitch, NSpace, FormInst, NTooltip } from 'naive-ui'
 import { fetch_datasource_list } from '@/api/datasource'
+import { formatSQL } from '@/utils/sqlFormatter'
 
 const message = useMessage()
 const dialog = useDialog()
@@ -145,10 +146,16 @@ const fetchData = async () => {
     const res = await trainingApi.getList(page.value, pageSize.value, {
       question: searchQuestion.value
     })
-    list.value = res.data.records
-    total.value = res.data.total_count
+    const result = await res.json()
+    if (result.code === 200) {
+      list.value = result.data.records
+      total.value = result.data.total_count
+    } else {
+      message.error(result.msg || '获取数据失败')
+    }
   } catch (error) {
     console.error(error)
+    message.error('获取数据失败')
   } finally {
     loading.value = false
   }
@@ -182,9 +189,14 @@ const handleSearch = () => {
 // Status Change
 const handleStatusChange = async (row: DataTrainingItem, value: boolean) => {
   try {
-    await trainingApi.enable(row.id, value)
-    row.enabled = value
-    message.success('状态更新成功')
+    const res = await trainingApi.enable(row.id, value)
+    const result = await res.json()
+    if (result.code === 200) {
+        row.enabled = value
+        message.success('状态更新成功')
+    } else {
+        message.error(result.msg || '状态更新失败')
+    }
   } catch (error) {
     message.error('状态更新失败')
   }
@@ -218,10 +230,15 @@ const handleSave = async () => {
     if (!errors) {
       modalLoading.value = true
       try {
-        await trainingApi.updateEmbedded(formModel)
-        message.success('保存成功')
-        showModal.value = false
-        fetchData()
+        const res = await trainingApi.updateEmbedded(formModel)
+        const result = await res.json()
+        if (result.code === 200) {
+             message.success('保存成功')
+             showModal.value = false
+             fetchData()
+        } else {
+             message.error(result.msg || '保存失败')
+        }
       } catch (error) {
         message.error('保存失败')
       } finally {
@@ -229,6 +246,13 @@ const handleSave = async () => {
       }
     }
   })
+}
+
+const handleFormatSQL = () => {
+  if (formModel.description) {
+    formModel.description = formatSQL(formModel.description)
+    message.success('格式化完成')
+  }
 }
 
 // Delete
@@ -240,9 +264,14 @@ const handleDelete = (row: DataTrainingItem) => {
     negativeText: '取消',
     onPositiveClick: async () => {
       try {
-        await trainingApi.deleteEmbedded({ ids: [row.id] })
-        message.success('删除成功')
-        fetchData()
+        const res = await trainingApi.deleteEmbedded({ ids: [row.id] })
+        const result = await res.json()
+        if (result.code === 200) {
+            message.success('删除成功')
+            fetchData()
+        } else {
+            message.error(result.msg || '删除失败')
+        }
       } catch (error) {
         message.error('删除失败')
       }

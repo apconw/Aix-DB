@@ -69,6 +69,7 @@ dependencies = [
     "anthropic>=0.75.0",
     "claude-agent-sdk>=0.1.16",
     "pymysql>=1.1.2",
+    "pgvector>=0.4.2",
 ]
 
 [[tool.uv.index]]

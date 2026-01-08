@@ -130,6 +130,8 @@ class TTerminology(Base):
     )
 
 
+from pgvector.sqlalchemy import VECTOR
+
 class TDataTraining(Base):
     __tablename__ = "t_data_training"
     __table_args__ = {"comment": "数据训练表"}
@@ -142,6 +144,6 @@ class TDataTraining(Base):
     )
     question: Mapped[Optional[str]] = mapped_column(String(255), comment="问题描述")
     description: Mapped[Optional[str]] = mapped_column(Text, comment="示例SQL")
-    # embedding: Mapped[Optional[str]] = mapped_column(Text, comment="向量数据") # 暂不使用 pgvector 对象，避免依赖问题
+    embedding: Mapped[Optional[str]] = mapped_column(VECTOR(1024), comment="向量数据")
     enabled: Mapped[Optional[bool]] = mapped_column(Boolean, default=True, comment="是否启用")
     advanced_application: Mapped[Optional[int]] = mapped_column(BigInteger, comment="高级应用ID")

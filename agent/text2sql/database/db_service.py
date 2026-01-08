@@ -57,11 +57,25 @@ def get_embedding_model_config():
             # Fallback or raise error?
             # Trying to find ANY embedding model if default not set
             model = session.query(TAiModel).filter(TAiModel.model_type == 2).first()
+        
+        # Fallback to LLM
+        if not model:
+            model = session.query(TAiModel).filter(
+                TAiModel.model_type == 1,
+                TAiModel.default_model == True
+            ).first()
+            
+        if not model:
+             model = session.query(TAiModel).filter(TAiModel.model_type == 1).first()
 
         if not model:
-            raise ValueError("未配置嵌入模型 (Embedding Model)")
+            raise ValueError("未配置嵌入模型 (Embedding Model) 且无可用大模型")
+            
+        base_model = model.base_model
+        if model.model_type == 1 and model.supplier == 1:
+             base_model = "text-embedding-3-small"
 
-        return {"name": model.base_model, "api_key": model.api_key, "base_url": model.api_domain}
+        return {"name": base_model, "api_key": model.api_key, "base_url": model.api_domain}
 
 
 # 重排模型配置
