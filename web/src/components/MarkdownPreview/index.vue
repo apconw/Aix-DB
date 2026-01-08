@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import type { TransformStreamModelTypes } from './transform'
-import MarkdownEcharts from './MarkdownEcharts.vue'
-import MarkdownTable from './MarkdownTable.vue'
+import MarkdownEcharts from './markdown-echarts.vue'
+import MarkdownTable from './markdown-table.vue'
 import MarkdownInstance from './plugins/markdown'
 import {
 
