@@ -294,6 +294,7 @@ onMounted(() => {
 </template>
 
 <style lang="scss" scoped>
+@use "@/styles/typography.scss" as *;
 .user-manager {
   height: 100%;
   display: flex;
@@ -312,10 +313,11 @@ onMounted(() => {
       align-items: center;
 
       h2 {
+        @include h3-style;
         margin: 0;
-        font-size: 18px;
-        font-weight: 600;
-        color: #1f2937;
+        color: $heading-color;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
       }
     }
 

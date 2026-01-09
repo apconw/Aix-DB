@@ -299,6 +299,7 @@ onMounted(() => {
 </template>
 
 <style lang="scss" scoped>
+@use "@/styles/typography.scss" as *;
 .datasource-manager {
   padding: 24px 32px;
   height: 100%;
@@ -335,16 +336,18 @@ onMounted(() => {
       }
 
       h2 {
+        @include h2-style;
         margin: 0;
-        font-size: 24px;
-        font-weight: 600;
-        color: #1f2937;
+        color: $heading-color;
       }
 
       .subtitle {
         margin: 0;
-        color: #6b7280;
-        font-size: 14px;
+        color: $text-color-secondary;
+        font-size: $font-size-base;
+        font-weight: $font-weight-normal;
+        line-height: $line-height-base;
+        letter-spacing: $letter-spacing-normal;
       }
     }
 
@@ -421,17 +424,24 @@ onMounted(() => {
 
         .name {
           margin: 0 0 4px;
-          font-size: 16px;
-          font-weight: 600;
-          color: #111827;
+          font-size: $font-size-md;
+          font-weight: $font-weight-semibold;
+          line-height: $line-height-normal;
+          letter-spacing: $letter-spacing-tight;
+          color: $heading-color;
           white-space: nowrap;
           overflow: hidden;
           text-overflow: ellipsis;
+          -webkit-font-smoothing: antialiased;
+          -moz-osx-font-smoothing: grayscale;
         }
 
         .type {
-          font-size: 12px;
-          color: #6b7280;
+          font-size: $font-size-sm;
+          font-weight: $font-weight-medium;
+          line-height: $line-height-sm;
+          letter-spacing: $letter-spacing-wide;
+          color: $text-color-secondary;
           background: #f3f4f6;
           padding: 2px 8px;
           border-radius: 999px;
@@ -461,15 +471,19 @@ onMounted(() => {
     }
 
     .card-desc {
-      font-size: 14px;
-      color: #6b7280;
+      font-size: $font-size-base;
+      font-weight: $font-weight-normal;
+      line-height: $line-height-normal;
+      letter-spacing: $letter-spacing-normal;
+      color: $text-color-secondary;
       margin-bottom: 16px;
-      line-height: 1.5;
       height: 42px;
       overflow: hidden;
       display: -webkit-box;
       -webkit-line-clamp: 2;
       -webkit-box-orient: vertical;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
     }
 
     .card-meta {
@@ -490,7 +504,7 @@ onMounted(() => {
         }
 
         .value {
-          font-family: "Fira Code", "Fira Mono", source-code-pro, Menlo, Monaco, Consolas, "Courier New", monospace;
+          @include code-style;
           background: #f9fafb;
           padding: 2px 6px;
           border-radius: 4px;
@@ -507,11 +521,14 @@ onMounted(() => {
       border-top: 1px solid #f3f4f6;
 
       .stats {
-        font-size: 12px;
-        color: #6b7280;
+        font-size: $font-size-sm;
+        font-weight: $font-weight-normal;
+        line-height: $line-height-sm;
+        letter-spacing: $letter-spacing-normal;
+        color: $text-color-secondary;
 
         .count {
-          font-weight: 600;
+          font-weight: $font-weight-semibold;
           color: #111827;
           margin-right: 2px;
         }

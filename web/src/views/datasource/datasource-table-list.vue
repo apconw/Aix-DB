@@ -660,6 +660,7 @@ onMounted(() => {
 </template>
 
 <style lang="scss" scoped>
+@use "@/styles/typography.scss" as *;
 .table-list-layout {
   height: 100vh;
   background-color: #f9fafb;
@@ -695,14 +696,18 @@ onMounted(() => {
       }
 
       .ds-name {
-        font-size: 16px;
-        font-weight: 600;
-        color: #111827;
+        font-size: $font-size-md;
+        font-weight: $font-weight-semibold;
+        line-height: $line-height-normal;
+        letter-spacing: $letter-spacing-tight;
+        color: $heading-color;
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
         max-width: 180px;
         cursor: pointer;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
       }
     }
   }
@@ -725,9 +730,14 @@ onMounted(() => {
       cursor: pointer;
       border-radius: 6px;
       margin-bottom: 2px;
-      font-size: 14px;
-      color: #374151;
+      font-size: $font-size-base;
+      font-weight: $font-weight-normal;
+      line-height: $line-height-base;
+      letter-spacing: $letter-spacing-normal;
+      color: $text-color-primary;
       transition: all 0.2s;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
 
       .item-icon {
         margin-right: 10px;
@@ -747,16 +757,20 @@ onMounted(() => {
           white-space: nowrap;
           overflow: hidden;
           text-overflow: ellipsis;
-          line-height: 1.5;
+          line-height: $line-height-normal;
+          font-weight: $font-weight-medium;
         }
 
         .table-comment {
-          font-size: 12px;
-          color: #9ca3af;
+          font-size: $font-size-sm;
+          font-weight: $font-weight-normal;
+          line-height: $line-height-sm;
+          letter-spacing: $letter-spacing-normal;
+          color: $text-color-tertiary;
           white-space: nowrap;
           overflow: hidden;
           text-overflow: ellipsis;
-          line-height: 1.4;
+          margin-top: 2px;
         }
       }
 
@@ -822,18 +836,22 @@ onMounted(() => {
       margin-bottom: 8px;
 
       .table-title {
+        @include h2-style;
         margin: 0;
-        font-size: 24px;
-        font-weight: 600;
-        color: #111827;
+        color: $heading-color;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
       }
     }
 
     .desc-row {
       display: flex;
       align-items: center;
-      font-size: 14px;
-      color: #6b7280;
+      font-size: $font-size-base;
+      font-weight: $font-weight-normal;
+      line-height: $line-height-base;
+      letter-spacing: $letter-spacing-normal;
+      color: $text-color-secondary;
 
       .label {
         margin-right: 8px;
@@ -896,9 +914,14 @@ onMounted(() => {
     padding: 12px 16px;
     background: #f9fafb;
     border-bottom: 1px solid #f3f4f6;
-    font-size: 12px;
-    color: #6b7280;
+    font-size: $font-size-sm;
+    font-weight: $font-weight-medium;
+    line-height: $line-height-sm;
+    letter-spacing: $letter-spacing-wide;
+    color: $text-color-secondary;
     flex-shrink: 0;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
 
   .empty-preview {
@@ -946,12 +969,18 @@ onMounted(() => {
 
 .mapping-hint {
   margin-top: 8px;
-  font-size: 12px;
-  color: #9ca3af;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-normal;
+  line-height: $line-height-sm;
+  letter-spacing: $letter-spacing-normal;
+  color: $text-color-tertiary;
 }
 
 .ds-tooltip-info {
-  font-size: 12px;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-normal;
+  line-height: $line-height-relaxed;
+  letter-spacing: $letter-spacing-normal;
 
   div {
     margin-bottom: 4px;

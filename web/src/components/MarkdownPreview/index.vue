@@ -637,150 +637,217 @@ const currentQaOption = computed(() => {
 </template>
 
 <style lang="scss">
+@use "sass:color";
+@use "@/styles/typography.scss" as *;
+
 .markdown-wrapper {
   background-color: #fff;
-
-  // background: linear-gradient(to right, #f0effe, #d4eefc);
-
   padding: 1px 0;
-  color: #113;
+  color: $text-color-primary;
 
-  /* 可选：基础字体大小与行高，提升可读性 */
+  // 使用 Plus Jakarta Sans 字体 - 参考千问网站
+  font-family: "Plus Jakarta Sans", $font-family-base !important;
+  font-size: $font-size-md; // 16px
+  line-height: $line-height-relaxed; // 1.625
+  font-weight: $font-weight-normal;
+  letter-spacing: $letter-spacing-normal;
 
-  font-size: 16px;
-  line-height: 1.7;
-  font-weight: 400;
-
-  /* 优化字体渲染 */
-
+  // 优化字体渲染
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  text-rendering: optimizelegibility;
+  text-rendering: optimizeLegibility;
+  font-feature-settings: "kern" 1, "liga" 1;
+  
+  // 确保所有子元素也使用正确的字体
+  * {
+    font-family: "Plus Jakarta Sans", $font-family-base !important;
+  }
+  
+  // 代码块保持等宽字体
+  code, pre, kbd, samp {
+    font-family: $font-family-mono !important;
+  }
 
+  // 标题样式
   h1 {
+    @include h1-style;
     font-size: 2em;
+    margin-top: 1.5em;
+    margin-bottom: 0.75em;
+    padding-bottom: 0.3em;
+    border-bottom: 2px solid #f0f0f0;
   }
 
   h2 {
-    font-size: 1.5em;
+    @include h2-style;
+    font-size: 1.75em;
+    margin-top: 1.25em;
+    margin-bottom: 0.6em;
     padding-bottom: 0.3em;
     border-bottom: 1px solid #f6f7fb;
   }
 
   h3 {
-    font-size: 1.25em;
+    @include h3-style;
+    font-size: 1.5em;
+    margin-top: 1em;
+    margin-bottom: 0.5em;
   }
 
   h4 {
-    font-size: 1em;
+    @include h4-style;
+    font-size: 1.25em;
+    margin-top: 0.875em;
+    margin-bottom: 0.5em;
   }
 
   h5 {
-    font-size: 0.875em;
+    @include h5-style;
+    font-size: 1.125em;
+    margin-top: 0.75em;
+    margin-bottom: 0.5em;
   }
 
   h6 {
-    font-size: 0.85em;
+    @include h6-style;
+    font-size: 1em;
+    margin-top: 0.625em;
+    margin-bottom: 0.5em;
   }
 
-  h1,
-  h2,
-  h3,
-  h4,
-  h5,
-  h6 {
-    margin: 0 auto;
-    line-height: 1.25;
-    margin-top: 20px; /* 添加顶部外边距，这里设置为20像素，你可以根据需要调整这个值 */
-    margin-bottom: 15px;
+  // 列表样式
+  ul, ol {
+    padding-left: 1.75em;
+    margin: 0.75em 0;
+    line-height: $line-height-relaxed;
+
+    li {
+      margin-bottom: 0.5em;
+      line-height: $line-height-relaxed;
+      list-style-position: outside;
+
+      & > p {
+        margin: 0.5em 0;
+        line-height: $line-height-relaxed;
+      }
+    }
   }
 
-  & ul,
-  ol {
+  ol ol, ul ul {
     padding-left: 1.5em;
-    line-height: 0.8;
+    margin-top: 0.25em;
+    margin-bottom: 0.25em;
   }
 
-  & ul,
-  li,
-  ol {
-    list-style-position: outside;
-    white-space: normal;
-  }
-
-  li {
-    line-height: 2;
-  }
-
-  ol ol {
-    padding-left: 20px;
-  }
-
-  ul ul {
-    padding-left: 20px;
-  }
-
-  hr {
-    margin: 16px 0;
-  }
-
-  a {
-    color: $color-default;
-    font-weight: bolder;
-    text-decoration: underline;
-    padding: 0 3px;
-    display: block; // 让 a 标签作为块级元素，实现换行
-  }
-
+  // 段落样式
   p {
-    line-height: 2;
-    margin: 10px 16px;
+    line-height: $line-height-relaxed;
+    margin: 0.875em 16px;
+    color: $text-color-primary;
 
     & > code {
-      // 添加透明背景的样式
-
-      background-color: transparent;
+      @include code-style;
+      background-color: rgba(105, 46, 230, 0.08);
       white-space: pre;
-      padding: 2px 4px;
+      padding: 2px 6px;
       border-radius: 4px;
       font-size: 0.9em;
+      color: #692ee6;
     }
 
     img {
       display: inline-block;
+      max-width: 100%;
+      height: auto;
+      border-radius: 4px;
     }
   }
 
-  li > p {
-    line-height: 2;
+  // 链接样式
+  a {
+    color: $color-primary;
+    font-weight: $font-weight-medium;
+    text-decoration: none;
+    padding: 0 2px;
+    border-bottom: 1px solid rgba(105, 46, 230, 0.3);
+    transition: all 0.2s ease;
+
+    &:hover {
+      color: color.scale($color-primary, $lightness: 10%);
+      border-bottom-color: rgba(105, 46, 230, 0.5);
+    }
+
+    &:active {
+      color: color.scale($color-primary, $lightness: -10%);
+    }
   }
 
+  // 引用样式
   blockquote {
-    padding: 10px;
-    margin: 20px 0;
-    border-left: 5px solid #ccc;
-    background-color: #f9f9f9;
-    color: #555;
+    padding: 12px 16px;
+    margin: 1em 0;
+    border-left: 4px solid $color-primary;
+    background-color: rgba(105, 46, 230, 0.04);
+    color: $text-color-secondary;
+    border-radius: 0 4px 4px 0;
+    font-style: italic;
 
     & > p {
       margin: 0;
+      line-height: $line-height-relaxed;
     }
   }
 
-  table {
-    border-collapse: collapse; /* 合并相邻单元格的边框 */
-    width: 100%;
+  // 分隔线样式
+  hr {
+    margin: 1.5em 0;
+    border: none;
+    border-top: 1px solid #e5e7eb;
+    background: none;
   }
 
-  th,
-  td {
-    border: 1px solid #f6f7fb; /* 将边框颜色设为红色 */
-    padding: 8px;
-    text-align: left;
+  // 表格样式
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    margin: 1em 0;
+    font-size: $font-size-base;
+    line-height: $line-height-normal;
   }
 
   th {
-    background-color: #f2f2f2; /* 可选：给表头设置背景色 */
+    background-color: #f8f9fa;
+    font-weight: $font-weight-semibold;
+    color: $text-color-primary;
+    padding: 12px 16px;
+    text-align: left;
+    border: 1px solid #e5e7eb;
+    font-size: $font-size-sm;
+    letter-spacing: $letter-spacing-wide;
+  }
+
+  td {
+    padding: 12px 16px;
+    border: 1px solid #e5e7eb;
+    text-align: left;
+    color: $text-color-primary;
+    line-height: $line-height-relaxed;
+
+    code {
+      @include code-style;
+      background-color: rgba(105, 46, 230, 0.08);
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 0.9em;
+    }
+  }
+
+  tr:nth-child(even) {
+    background-color: #fafbfc;
+  }
+
+  tr:hover {
+    background-color: rgba(105, 46, 230, 0.02);
   }
 
   /* 添加图片样式，约束宽度 */
@@ -813,3 +880,6 @@ const currentQaOption = computed(() => {
   font-weight: 500;
 }
 </style>
+
+
+

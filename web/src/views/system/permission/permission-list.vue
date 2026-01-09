@@ -959,6 +959,7 @@ onMounted(() => {
 </template>
 
 <style lang="scss" scoped>
+@use "@/styles/typography.scss" as *;
 .permission {
   height: 100%;
   width: 100%;
@@ -972,9 +973,13 @@ onMounted(() => {
     margin-bottom: 16px;
 
     .page-title {
-      font-weight: 500;
-      font-size: 20px;
-      line-height: 28px;
+      font-weight: $font-weight-medium;
+      font-size: $font-size-xl;
+      line-height: $line-height-xl;
+      letter-spacing: $letter-spacing-tight;
+      color: $heading-color;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
     }
   }
 
@@ -1040,11 +1045,15 @@ onMounted(() => {
 }
 
 .title {
-  font-weight: 500;
-  font-size: 16px;
-  line-height: 24px;
+  font-weight: $font-weight-medium;
+  font-size: $font-size-md;
+  line-height: $line-height-md;
+  letter-spacing: $letter-spacing-normal;
+  color: $heading-color;
   margin-top: 8px;
   margin-bottom: 16px;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 .table-content {

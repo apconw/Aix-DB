@@ -975,7 +975,7 @@ const handleHistoryClick = async (item: any) => {
 
           <!-- Recent Chats Label -->
           <div class="px-6 py-4 flex justify-between items-center mt-10 ml-10 mb-5">
-            <span class="text-[#7A7A7A] text-[13px] font-semibold tracking-wide">最近对话</span>
+            <span class="text-[#7A7A7A] text-[13px] font-semibold tracking-wide history-label">最近对话</span>
             <div
               class="i-hugeicons:settings-04 text-18 text-[#7A7A7A] cursor-pointer hover:text-gray-600"
               @click="openModal"
@@ -990,7 +990,7 @@ const handleHistoryClick = async (item: any) => {
           >
             <div
               v-if="isLoadingHistory && !tableData.length"
-              class="p-4 text-center text-gray-400 text-xs"
+              class="p-4 text-center text-gray-400 text-xs loading-text"
             >
               加载中...
             </div>
@@ -1003,7 +1003,7 @@ const handleHistoryClick = async (item: any) => {
               @click="handleHistoryClick(item)"
             >
               <div class="flex items-center gap-2 overflow-hidden w-full">
-                <div class="truncate text-[14px] w-full leading-relaxed ml-10 mt-10">
+                <div class="truncate text-[14px] w-full leading-relaxed ml-10 mt-10 history-item-text">
                   {{ item.key || '无标题对话' }}
                 </div>
               </div>
@@ -1016,7 +1016,7 @@ const handleHistoryClick = async (item: any) => {
 
             <div
               v-if="isLoadingMoreHistory"
-              class="py-2 text-center text-gray-400 text-xs"
+              class="py-2 text-center text-gray-400 text-xs loading-text"
             >
               加载更多...
             </div>
@@ -1030,7 +1030,7 @@ const handleHistoryClick = async (item: any) => {
             />
 
             <div
-              class="my-space flex items-center gap-2 text-[#6A6A6A] hover:text-[#7E6BF2] cursor-pointer text-[14px] font-normal transition-colors"
+              class="my-space flex items-center gap-2 text-[#6A6A6A] hover:text-[#7E6BF2] cursor-pointer text-[14px] font-normal transition-colors history-item-text"
             >
               <div class="i-hugeicons:folder-01 text-18"></div>
               <span>我的空间</span>
@@ -1068,7 +1068,7 @@ const handleHistoryClick = async (item: any) => {
               </div>
 
               <div class="model-info flex items-center gap-1.5 cursor-pointer">
-                <span class="text-[16px] font-medium text-[#111]">Qwen3-Max</span>
+                <span class="text-[16px] font-medium text-[#111] model-name">Qwen3-Max</span>
               </div>
             </div>
             <!--
@@ -1125,7 +1125,7 @@ const handleHistoryClick = async (item: any) => {
                       <div
                         :style="{
                           'fontSize': '16px',
-                          'fontFamily': `-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji'`,
+                          'fontFamily': `'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', 'Helvetica Neue', Arial, 'Noto Sans SC', sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji'`,
                           'fontWeight': '400',
                           'color': '#1a1a1a',
                           'backgroundColor': '#f5f7ff',
@@ -1133,10 +1133,13 @@ const handleHistoryClick = async (item: any) => {
                           'max-width': '800px',
                           'text-align': 'left',
                           'padding': '12px 20px',
-                          'line-height': 1.6,
+                          'line-height': 1.625,
+                          'letter-spacing': '0',
                           'word-wrap': 'break-word',
                           'word-break': 'break-all',
                           'white-space': 'pre-wrap',
+                          '-webkit-font-smoothing': 'antialiased',
+                          '-moz-osx-font-smoothing': 'grayscale',
                         }"
                       >
                         {{ item.question }}
@@ -1422,6 +1425,14 @@ const handleHistoryClick = async (item: any) => {
 .qianwen-sidebar {
   background-color: #fff;
   border-right: 1px solid #fff;
+  font-family: "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif !important;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  
+  // 确保侧边栏内所有文本使用正确的字体
+  * {
+    font-family: "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif !important;
+  }
 }
 
 .new-chat-btn {
@@ -1435,6 +1446,49 @@ const handleHistoryClick = async (item: any) => {
 
 .history-item {
   transition: all 0.2s;
+  font-family: "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif !important;
+  font-weight: 400;
+  letter-spacing: 0;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  
+  // 确保内部文本也使用正确的字体
+  * {
+    font-family: "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif !important;
+  }
+}
+
+.history-label,
+.loading-text,
+.history-item-text,
+.model-name {
+  font-family: "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif !important;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.history-item-text {
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.5;
+  letter-spacing: 0;
+}
+
+.model-name {
+  font-weight: 500;
+  letter-spacing: -0.01em;
+}
+
+// 对话内容区域
+.conversation-item {
+  font-family: "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif !important;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  
+  // 确保用户消息和AI回复都使用正确的字体
+  > div {
+    font-family: "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif !important;
+  }
 }
 
 /* Custom Scrollbar for History List */
@@ -1488,6 +1542,8 @@ const handleHistoryClick = async (item: any) => {
 .model-icon {
   color: #8b5cf6;
   font-size: 16px;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 .badge {
@@ -1495,6 +1551,9 @@ const handleHistoryClick = async (item: any) => {
   padding: 2px 8px;
   border-radius: 4px;
   font-size: 12px;
+  font-weight: 500;
+  line-height: 1.5;
+  letter-spacing: 0.01em;
   color: #666;
 }
 
@@ -1535,6 +1594,9 @@ const handleHistoryClick = async (item: any) => {
   padding: 6px 12px;
   border-radius: 20px;
   font-size: 13px;
+  font-weight: 500;
+  line-height: 1.5;
+  letter-spacing: 0.01em;
   border: 1px solid transparent;
   transition: all 0.2s;
   cursor: default;
@@ -1567,6 +1629,8 @@ const handleHistoryClick = async (item: any) => {
 .mode-icon-label {
   font-size: 13px;
   font-weight: 500;
+  line-height: 1.5;
+  letter-spacing: 0.01em;
 }
 
 .custom-chat-input {
@@ -1578,13 +1642,23 @@ const handleHistoryClick = async (item: any) => {
 
   background-color: transparent !important;
   font-size: 16px;
+  font-weight: 400;
+  line-height: 1.625;
+  letter-spacing: 0;
   padding: 0;
   flex: 1;
 
   :deep(.n-input__textarea-el) {
+    font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+    font-size: 16px;
+    font-weight: 400;
+    line-height: 1.625;
+    letter-spacing: 0;
     padding: 0;
+    color: #1a1a1a;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
     min-height: 40px;
-    line-height: 1.6;
   }
 
   :deep(.n-input__placeholder) {
@@ -1689,6 +1763,15 @@ const handleHistoryClick = async (item: any) => {
   height: 100%;
   padding-bottom: 20px; // 底部内边距，防止内容被遮挡
   background-color: #fff;
+  font-family: "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif !important;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  
+  // 确保对话内容区域使用正确的字体
+  *:not(code):not(pre):not(kbd):not(samp) {
+    font-family: "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif !important;
+  }
 }
 
 /* 滚动条整体部分 */
@@ -1731,33 +1814,19 @@ const handleHistoryClick = async (item: any) => {
 }
 
 :deep(.custom-table td) {
-  color: #113;
+  color: #1a1a1a;
   padding: 12px 30px;
-  background-color:  #fff;
+  background-color: #fff;
   transition: background-color 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-
-  /* 优化后的系统字体栈：优先使用系统原生字体 */
-
-  font-family:
-    /* macOS */ -apple-system,
-    /* Windows */ BlinkMacSystemFont,
-    /* 通用系统UI */ 'Segoe UI',
-    /* 开源跨平台 */ Roboto,
-    /* Linux */ Oxygen, Ubuntu, Cantarell,
-    /* fallback */ 'Open Sans', 'Helvetica Neue', Arial,
-    /* 终极兜底 */ sans-serif,
-    /* 现代浏览器推荐 */ system-ui,
-    /* 苹果新字体支持 */ "SF Pro Text";
-
-  /* 可选：基础字体大小与行高，提升可读性 */
-
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', 'Helvetica Neue', Helvetica, Arial, 'Noto Sans SC', sans-serif;
   font-size: 14px;
-
-  /* 优化字体渲染 */
-
+  font-weight: 400;
+  line-height: 1.625;
+  letter-spacing: 0;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  text-rendering: optimizelegibility;
+  text-rendering: optimizeLegibility;
+  font-feature-settings: "kern" 1, "liga" 1;
 }
 
 :deep(.custom-table .selected-row td) {
@@ -1823,6 +1892,10 @@ const handleHistoryClick = async (item: any) => {
 .content {
   border-right:1px solid #fff;
   background-color: #fff;
+  font-family: "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
 }
 
 .footer {

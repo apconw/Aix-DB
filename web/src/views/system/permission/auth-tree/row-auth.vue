@@ -311,11 +311,20 @@ const emits = defineEmits(['save'])
 </template>
 
 <style lang="scss" scoped>
+@use "@/styles/typography.scss" as *;
+
 .rowAuth {
-  font-family: Avenir, Helvetica, Arial, sans-serif;
+  font-family: $font-family-base;
+  font-size: $font-size-base;
+  font-weight: $font-weight-normal;
+  line-height: $line-height-normal;
+  letter-spacing: $letter-spacing-normal;
   text-align: center;
-  color: #2c3e50;
+  color: $text-color-primary;
   position: relative;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
 }
 .real-line,
 .dash-line {

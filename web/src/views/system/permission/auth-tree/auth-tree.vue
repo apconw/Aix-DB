@@ -153,6 +153,7 @@ const del = (index: any, child: any) => {
 </template>
 
 <style lang="scss" scoped>
+@use "@/styles/typography.scss" as *;
 .logic {
   display: flex;
   align-items: center;
@@ -190,17 +191,20 @@ const del = (index: any, child: any) => {
     .operate-title {
       word-wrap: break-word;
       box-sizing: border-box;
-      color: rgba(0, 0, 0, 0.65);
-      font-size: 12px;
+      color: $text-color-secondary;
+      font-size: $font-size-sm;
+      font-weight: $font-weight-normal;
+      line-height: $line-height-sm;
+      letter-spacing: $letter-spacing-normal;
       display: inline-block;
       white-space: nowrap;
       margin: 0;
       padding: 0;
-      line-height: 20px;
       position: relative;
       z-index: 1;
       height: 20px;
-      color: #1f2329;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
 
       .mrg-title {
         text-align: left;
@@ -208,7 +212,9 @@ const del = (index: any, child: any) => {
         position: relative;
         display: flex;
         height: 20px;
-        font-size: 12px;
+        font-size: $font-size-sm;
+        font-weight: $font-weight-normal;
+        line-height: $line-height-sm;
         align-items: center;
         justify-content: center;
       }
@@ -226,7 +232,7 @@ const del = (index: any, child: any) => {
 
     .operate-icon {
       height: 20px;
-      line-height: 20px;
+      line-height: $line-height-sm;
       z-index: 1;
     }
   }
@@ -239,22 +245,25 @@ const del = (index: any, child: any) => {
 
     .operand-btn {
       box-sizing: border-box;
-      font-weight: 400;
+      font-weight: $font-weight-normal;
+      font-size: $font-size-base;
+      line-height: $line-height-base;
+      letter-spacing: $letter-spacing-normal;
       text-align: center;
       outline: 0;
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      line-height: 1;
       cursor: pointer;
       height: 32px;
       padding: 0 10px;
       margin-right: 10px;
-      font-size: 14px;
       color: var(--n-primary-color);
       background: #fff;
       border: 1px solid var(--n-primary-color);
       border-radius: 6px;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
     }
   }
 }

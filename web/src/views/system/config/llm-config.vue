@@ -271,6 +271,7 @@ onMounted(() => {
 </template>
 
 <style lang="scss" scoped>
+@use "@/styles/typography.scss" as *;
 .llm-config {
   padding: 24px 32px;
   height: 100%;
@@ -307,10 +308,9 @@ onMounted(() => {
       }
 
       h2 {
+        @include h2-style;
         margin: 0;
-        font-size: 24px;
-        font-weight: 600;
-        color: #1f2937;
+        color: $heading-color;
       }
     }
 
@@ -388,18 +388,25 @@ onMounted(() => {
 
           .name {
             margin: 0;
-            font-size: 16px;
-            font-weight: 600;
-            color: #111827;
+            font-size: $font-size-md;
+            font-weight: $font-weight-semibold;
+            line-height: $line-height-normal;
+            letter-spacing: $letter-spacing-tight;
+            color: $heading-color;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
           }
         }
 
         .supplier {
-          font-size: 12px;
-          color: #6b7280;
+          font-size: $font-size-sm;
+          font-weight: $font-weight-medium;
+          line-height: $line-height-sm;
+          letter-spacing: $letter-spacing-wide;
+          color: $text-color-secondary;
           background: #f3f4f6;
           padding: 2px 8px;
           border-radius: 999px;
@@ -415,18 +422,21 @@ onMounted(() => {
       .meta-item {
         display: flex;
         align-items: center;
-        font-size: 12px;
-        color: #4b5563;
+        font-size: $font-size-sm;
+        font-weight: $font-weight-normal;
+        line-height: $line-height-sm;
+        letter-spacing: $letter-spacing-normal;
+        color: $text-color-secondary;
         overflow: hidden;
 
         .label {
-          color: #9ca3af;
+          color: $text-color-tertiary;
           width: 60px;
           flex-shrink: 0;
         }
 
         .value {
-          font-family: monospace;
+          @include code-style;
           background: #f9fafb;
           padding: 2px 6px;
           border-radius: 4px;

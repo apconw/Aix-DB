@@ -313,12 +313,15 @@ const bottomIcons = [
 }
 
 .page-title {
-  font-size: 70px;
-  font-weight: 900; /* Extra Bold/Black */
-  line-height: 1;
+  font-size: 64px;
+  font-weight: 800;
+  line-height: 1.1;
   margin: 0;
-  letter-spacing: -6px; /* Tight tracking for modern logo feel */
-  font-family: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  letter-spacing: -0.04em;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
 }
 
 .gradient-text {
@@ -364,14 +367,20 @@ const bottomIcons = [
 
   background-color: transparent !important;
   font-size: 16px;
+  font-weight: 400;
+  line-height: 1.625;
+  letter-spacing: 0;
   padding: 0;
   flex: 1;
 
   :deep(.n-input__textarea-el) {
     padding: 0;
-    min-height: 80px; /* Increased default height */
-    line-height: 1.6;
-    color: #334155;
+    min-height: 80px;
+    line-height: 1.625;
+    color: #1a1a1a;
+    font-size: 16px;
+    font-weight: 400;
+    letter-spacing: 0;
   }
 
   :deep(.n-input__placeholder) {
@@ -393,6 +402,9 @@ const bottomIcons = [
   padding: 6px 12px;
   border-radius: 20px;
   font-size: 13px;
+  font-weight: 500;
+  line-height: 1.5;
+  letter-spacing: 0.01em;
   border: 1px solid transparent;
   transition: all 0.2s;
   cursor: default;
@@ -405,6 +417,9 @@ const bottomIcons = [
   padding: 6px 12px;
   border-radius: 20px;
   font-size: 13px;
+  font-weight: 500;
+  line-height: 1.5;
+  letter-spacing: 0.01em;
   color: #64748b;
   cursor: pointer;
   transition: all 0.2s;
@@ -437,6 +452,8 @@ const bottomIcons = [
   color: #6b7280;
   cursor: pointer;
   transition: color 0.2s;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 
   &:hover {
     color: #374151;

@@ -1,12 +1,15 @@
 import type { GlobalThemeOverrides } from 'naive-ui'
 import { darkTheme, lightTheme } from 'naive-ui'
 
+// 统一的字体系统 - 参考千问网站使用 Plus Jakarta Sans
+const fontFamilyBase = '"Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Helvetica Neue", Helvetica, Arial, "Noto Sans SC", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol"'
+
 const baseThemeOverrides: GlobalThemeOverrides = {
   common: {
     borderRadius: '6px',
     heightLarge: '40px',
     fontSizeLarge: '18px',
-    fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Helvetica Neue", Helvetica, Arial, sans-serif',
+    fontFamily: fontFamilyBase,
   },
 }
 
