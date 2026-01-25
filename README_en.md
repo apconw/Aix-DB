@@ -109,8 +109,8 @@ docker run -d \
   -p 18080:80 \
   -p 18088:8088 \
   -p 15432:5432 \
-  -p 19000:9000 \
-  -p 19001:9001 \
+  -p 9000:9000 \
+  -p 9001:9001 \
   -v ./volume/pg_data:/var/lib/postgresql/data \
   -v ./volume/minio/data:/data \
   -v ./volume/logs/supervisor:/var/log/supervisor \
