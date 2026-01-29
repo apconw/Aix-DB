@@ -106,7 +106,7 @@ Aix-DB 基于 **LangChain/LangGraph** 框架，结合 **MCP Skills** 多智能�
 
 ```bash
 docker run -d \
-  --name aix-db \
+  --name aix-db2 \
   --restart unless-stopped \
   -e TZ=Asia/Shanghai \
   -e SERVER_HOST=0.0.0.0 \
@@ -117,13 +117,13 @@ docker run -d \
   -p 15432:5432 \
   -p 9000:9000 \
   -p 9001:9001 \
-  -v ./volume/pg_data:/var/lib/postgresql/data \
-  -v ./volume/minio/data:/data \
-  -v ./volume/logs/supervisor:/var/log/supervisor \
-  -v ./volume/logs/nginx:/var/log/nginx \
-  -v ./volume/logs/aix-db:/var/log/aix-db \
-  -v ./volume/logs/minio:/var/log/minio \
-  -v ./volume/logs/postgresql:/var/log/postgresql \
+  -v $(pwd)/volume/pg_data:/var/lib/postgresql/data \
+  -v $(pwd)/volume/minio/data:/data \
+  -v $(pwd)/volume/logs/supervisor:/var/log/supervisor \
+  -v $(pwd)/volume/logs/nginx:/var/log/nginx \
+  -v $(pwd)/volume/logs/aix-db:/var/log/aix-db \
+  -v $(pwd)/volume/logs/minio:/var/log/minio \
+  -v $(pwd)/volume/logs/postgresql:/var/log/postgresql \
   --add-host host.docker.internal:host-gateway \
   crpi-7xkxsdc0iki61l0q.cn-hangzhou.personal.cr.aliyuncs.com/apconw/aix-db:1.2.2
 ```
