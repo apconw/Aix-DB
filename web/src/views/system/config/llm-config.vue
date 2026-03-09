@@ -88,6 +88,7 @@ const getSupplierName = (supplier: number) => {
     6: 'Qwen',
     7: 'Moonshot',
     8: 'ZhipuAI',
+    10: 'MiniMax',
     9: 'Other',
   }
   return map[supplier] || 'Unknown'

@@ -661,6 +661,7 @@ const bottomIcons = [
 </template>
 
 <style scoped lang="scss">
+@use "sass:color";
 // ============================================
 // 设计系统变量
 // ============================================
@@ -850,7 +851,7 @@ $shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
 
   &:hover {
     box-shadow: $shadow-xl;
-    border-color: darken($border-color, 5%);
+    border-color: color.adjust($border-color, $lightness: -5%);
     transform: translateY(-2px);
   }
 
@@ -958,7 +959,7 @@ $shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
   }
 
   &:hover {
-    background-color: darken($bg-subtle, 3%);
+    background-color: color.adjust($bg-subtle, $lightness: -3%);
     color: $text-primary;
     border-color: $border-color;
     transform: translateY(-1px);
@@ -1077,7 +1078,7 @@ $shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
     border-radius: 3px;
 
     &:hover {
-      background: darken($border-color, 10%);
+      background: color.adjust($border-color, $lightness: -10%);
     }
   }
 }
@@ -1157,7 +1158,7 @@ $shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
     border-radius: 3px;
 
     &:hover {
-      background: darken($border-color, 10%);
+      background: color.adjust($border-color, $lightness: -10%);
     }
   }
 }

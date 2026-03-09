@@ -2,6 +2,12 @@ const LayoutDefault = () => import('@/components/Layout/default.vue')
 
 const childrenRoutes: Array<RouteRecordRaw> = [
   {
+    path: 'skill-center',
+    name: 'SkillCenter',
+    component: () => import('@/views/skill-center.vue'),
+    meta: { requiresAuth: true },
+  },
+  {
     path: 'chat',
     meta: { requiresAuth: true },
     name: 'ChatRoot',

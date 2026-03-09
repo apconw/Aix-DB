@@ -39,6 +39,7 @@ const supplierOptions = [
   { label: 'Qwen', value: 6 },
   { label: 'Moonshot', value: 7 },
   { label: 'ZhipuAI', value: 8 },
+  { label: 'MiniMax', value: 10 },
   { label: 'Other', value: 9 },
 ]
 
@@ -88,6 +89,11 @@ watch(() => formData.supplier, (val) => {
   } else if (val === 8) { // ZhipuAI
     if (!formData.api_domain) {
       formData.api_domain = 'https://open.bigmodel.cn/api/paas/v4/'
+    }
+    formData.protocol = 1
+  } else if (val === 10) { // MiniMax
+    if (!formData.api_domain) {
+      formData.api_domain = 'https://api.minimaxi.com/v1'
     }
     formData.protocol = 1
   }

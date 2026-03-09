@@ -34,9 +34,16 @@ RUN pnpm run build && \
     find . -name "*.md" -not -path "./dist/*" -delete 2>/dev/null || true
 
 # ============ 阶段2: 构建 Python 依赖 ============
+# 从 uv 官方多架构镜像获取正确架构的 uv 二进制
+# 解决 Mac M1 上通过 QEMU 模拟 amd64 时 pipx install uv 获取错误架构的问题
+FROM ghcr.io/astral-sh/uv:0.8.0 AS uv-bin
+
 FROM python:3.11-slim-bookworm AS backend-builder
 
 WORKDIR /aix-db
+
+# 从官方镜像复制 uv 二进制（buildx 会自动为目标架构拉取对应的镜像）
+COPY --from=uv-bin /uv /usr/local/bin/uv
 
 # 设置镜像源和 PATH
 ENV PIP_INDEX_URL="https://mirrors.aliyun.com/pypi/simple" \
@@ -50,30 +57,33 @@ ENV PIP_INDEX_URL="https://mirrors.aliyun.com/pypi/simple" \
 # 只复制依赖文件
 COPY pyproject.toml uv.lock* requirements.txt* ./
 
-# 安装系统依赖和 Python 依赖
+# 安装系统编译依赖
 RUN set -eux; \
-    apt-get update && \
-    apt-get install -y --no-install-recommends \
+    apt-get update -o Acquire::Check-Valid-Until=false -o Acquire::AllowInsecureRepositories=true && \
+    apt-get install -y --no-install-recommends --allow-unauthenticated \
     gcc \
     g++ \
     python3-dev \
     libpq-dev \
-    libffi-dev \
-    && \
-    pip install --no-cache-dir --no-compile pipx && \
-    pipx install "uv==0.8.0" && \
+    libffi-dev
+
+# 安装 Python 依赖
+RUN set -eux; \
     uv venv --clear && \
     . .venv/bin/activate && \
-    uv sync --no-cache --index-url https://mirrors.aliyun.com/pypi/simple --extra-index-url "" && \
-    # 只进行安全的清理（保留所有元数据和 entry points）
-    find .venv -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true && \
-    find .venv -type f -name "*.pyc" -delete && \
-    find .venv -type f -name "*.pyo" -delete && \
-    # 清理构建工具
+    uv sync --frozen --no-cache --no-install-project \
+        --index-url https://mirrors.aliyun.com/pypi/simple && \
+    # 验证关键依赖安装成功
+    python -c "import sanic; print(f'sanic {sanic.__version__} installed')"
+
+# 清理缓存和构建工具
+RUN find .venv -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null; \
+    find .venv -type f -name "*.pyc" -delete 2>/dev/null; \
+    find .venv -type f -name "*.pyo" -delete 2>/dev/null; \
     apt-get purge -y gcc g++ python3-dev libpq-dev libffi-dev && \
     apt-get autoremove -y --purge && \
     apt-get clean && \
-    rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* /root/.cache /root/.local/bin/uv
+    rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* /root/.cache /usr/local/bin/uv
 
 # ============ 阶段3: 基础运行镜像 ============
 FROM python:3.11-slim-bookworm

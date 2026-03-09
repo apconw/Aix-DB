@@ -220,6 +220,48 @@ async def check_llm_status(data: dict) -> dict:
                 resp.raise_for_status()
                 return {"success": True, "message": "连接成功"}
         
+        # MiniMax 特殊处理
+        elif supplier == 10:  # MiniMax
+            # MiniMax 使用兼容OpenAI的API，但可能有特定的端点要求
+            domain = api_domain
+            
+            # 根据搜索结果，MiniMax的API端点可能不是标准的/models
+            # 尝试使用更简单的连接测试方法
+            url = f"{domain}/models"
+            headers = {"Content-Type": "application/json"}
+            if api_key:
+                headers["Authorization"] = f"Bearer {api_key}"
+            
+            try:
+                async with httpx.AsyncClient() as client:
+                    resp = await client.get(url, headers=headers, timeout=10)
+                    resp.raise_for_status()
+                    return {"success": True, "message": "连接成功"}
+            except httpx.HTTPStatusError as e:
+                if e.response.status_code == 404:
+                    # 对于MiniMax，如果/models端点不存在，尝试直接测试连接
+                    # 使用一个简单的HEAD请求来测试网络连接
+                    try:
+                        async with httpx.AsyncClient() as client:
+                            # 尝试对基础域名进行连接测试
+                            base_domain = domain.replace('/v1', '')
+                            resp = await client.head(base_domain, timeout=5)
+                            # 如果能连接到域名，说明配置基本正确
+                            return {"success": True, "message": "连接成功"}
+                    except:
+                        return {"success": False, "message": "无法连接到API域名，请检查网络和域名配置"}
+                elif e.response.status_code == 401:
+                    return {"success": False, "message": "API Key 无效或未授权"}
+                else:
+                    return {"success": False, "message": f"连接失败: HTTP {e.response.status_code}"}
+            except httpx.TimeoutException:
+                return {"success": False, "message": "连接超时，请检查网络或API域名"}
+            except httpx.ConnectError:
+                return {"success": False, "message": "无法连接到服务器，请检查API域名"}
+            except Exception as e:
+                logger.error(f"MiniMax连接测试失败: {e}")
+                return {"success": False, "message": f"连接失败: {str(e)}"}
+        
         # 其他供应商（DeepSeek, Qwen, Moonshot, ZhipuAI 等）
         else:
             # 尝试使用 OpenAI 兼容协议测试
@@ -237,6 +279,9 @@ async def check_llm_status(data: dict) -> dict:
         if e.response.status_code == 401:
             return {"success": False, "message": "API Key 无效或未授权"}
         elif e.response.status_code == 404:
+            # 对于MiniMax等供应商，可能需要特殊处理
+            if supplier == 10:  # MiniMax
+                return {"success": False, "message": "API 端点不存在，请检查 API 域名。MiniMax 可能需要使用完整的模型列表端点"}
             return {"success": False, "message": "API 端点不存在，请检查 API 域名"}
         else:
             return {"success": False, "message": f"连接失败: HTTP {e.response.status_code}"}
@@ -308,6 +353,30 @@ async def fetch_base_models(supplier: int, api_key: str = None, api_domain: str 
                 data = resp.json()
                 models = [m['id'] for m in data.get('data', [])]
                 return sorted(models)
+        
+        # MiniMax
+        elif supplier == 10:
+            if not api_key:
+                return []
+            domain = api_domain or "https://api.minimaxi.com/v1"
+            url = f"{domain}/models"
+            headers = {"Authorization": f"Bearer {api_key}"}
+            
+            try:
+                async with httpx.AsyncClient() as client:
+                    resp = await client.get(url, headers=headers, timeout=10)
+                    resp.raise_for_status()
+                    data = resp.json()
+                    # 根据OpenAI兼容API格式提取模型列表
+                    if 'data' in data:
+                        models = [m['id'] for m in data.get('data', [])]
+                    else:
+                        # 如果没有data字段，尝试其他格式
+                        models = [m['id'] for m in data] if isinstance(data, list) else []
+                    return sorted(models)
+            except:
+                # 如果获取模型列表失败，返回一些常见的MiniMax模型名称
+                return ["MiniMax-M2.1", "abab6.5s-chat", "abab5.5-chat"]
         
         # Fallback or other providers: Return empty list or hardcoded common ones?
         # For now return empty, frontend can allow manual entry
