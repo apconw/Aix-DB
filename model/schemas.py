@@ -484,6 +484,23 @@ class StopChatResponse(BaseResponse):
     data: Dict[str, str] = Field(description="停止结果")
 
 
+class ExportTableRequest(BaseModel):
+    """表格数据导出请求（数据问答结果导出为 CSV）"""
+
+    sql: str = Field(description="要执行的 SQL（将应用权限过滤）")
+    datasource_id: int = Field(description="数据源 ID")
+    filename: Optional[str] = Field(None, description="下载文件名（不含扩展名），默认 export.csv")
+
+
+class TablePageRequest(BaseModel):
+  """表格数据分页请求（基于 SQL 的分页查询）"""
+
+  sql: str = Field(description="要执行的 SQL（将应用权限过滤）")
+  datasource_id: int = Field(description="数据源 ID")
+  page: int = Field(1, description="页码（从 1 开始）")
+  size: int = Field(20, description="每页条数")
+
+
 # ==================== 文件服务相关模型 ====================
 class ReadFileRequest(BaseModel):
     """读取文件请求"""

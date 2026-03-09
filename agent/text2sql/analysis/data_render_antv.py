@@ -4,6 +4,7 @@
 """
 import json
 import logging
+import os
 import traceback
 from decimal import Decimal
 from datetime import datetime, date
@@ -36,6 +37,9 @@ DB_TYPE_TO_DIALECT = {
     "kingbase": "postgres",  # 人大金仓兼容 PostgreSQL
     "excel": "postgres",  # Excel 使用 PostgreSQL 规则
 }
+
+# 前端表格预览最大行数（避免一次性返回全部数据导致页面卡顿）
+TABLE_PREVIEW_MAX_ROWS = int(os.getenv("TABLE_PREVIEW_MAX_ROWS", "100"))
 
 
 def convert_value(v):
@@ -513,8 +517,11 @@ async def data_render_ant(state: AgentState):
             except Exception as e:
                 logger.warning(f"获取数据源类型失败: {e}，使用默认值 mysql")
 
+        # 视图侧仅预览前 TABLE_PREVIEW_MAX_ROWS 行，避免一次性渲染全部数据导致前端卡顿
+        preview_data = data[:TABLE_PREVIEW_MAX_ROWS]
+
         # 获取实际的列名(从第一条数据中提取)
-        actual_columns = list(data[0].keys()) if data else []
+        actual_columns = list(preview_data[0].keys()) if preview_data else []
         
         if not actual_columns:
             logger.warning("无法从数据中提取列名，跳过数据渲染")
@@ -536,9 +543,9 @@ async def data_render_ant(state: AgentState):
         else:
             logger.warning(f"列名映射失败或返回空，使用原始列名。actual_columns={actual_columns[:3]}")
 
-        # 转换数据格式: 将英文列名映射为中文列名
+        # 转换数据格式: 将英文列名映射为中文列名（仅对预览数据执行）
         formatted_data = []
-        for row in data:
+        for row in preview_data:
             formatted_row = {}
             for col_name, value in row.items():
                 chinese_col_name = column_mapping.get(col_name, col_name)

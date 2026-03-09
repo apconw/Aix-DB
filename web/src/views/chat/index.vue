@@ -388,6 +388,7 @@ const conversationItems = ref<
       parse_file_key: string
       file_size: string
     }[]
+    datasource_id?: number
     chartData?: { // 图表数据，用于多轮对话数据隔离
       template_code?: string
       columns?: string[]
@@ -734,6 +735,7 @@ const handleCreateStylized = async (
       file_key: upload_file_list,
       role: 'user',
       reader: null,
+      datasource_id: selectedDatasource.value?.id,
     })
     // 更新 currentRenderIndex 以包含新添加的项
     currentRenderIndex.value = conversationItems.value.length - 1
@@ -816,6 +818,7 @@ const handleCreateStylized = async (
       role: 'assistant',
       reader,
       chartData: null, // 初始化为 null，数据到达时更新
+      datasource_id: selectedDatasource.value?.id,
     })
 
     // 更新 currentRenderIndex 以包含新添加的项
@@ -1691,7 +1694,7 @@ const handleHistoryClick = async (item: any) => {
               @click="showDefaultPage = true"
             >
               <div class="i-hugeicons:ai-chat-02 text-32 c-[#3B5CFF]"></div>
-              <span class="text-24 font-bold text-[#111111] tracking-tight font-sans">助手</span>
+              <span class="text-24 font-bold text-[#111111] tracking-tight font-sans">智能助手</span>
             </div>
             <div class="header-actions flex items-center gap-5">
               <div
@@ -2066,6 +2069,7 @@ const handleHistoryClick = async (item: any) => {
                     :chart-id="`${index}devID${generateRandomSuffix()}`"
                     :chart-data="item.chartData"
                     :record-id="item.record_id"
+                    :datasource-id="item.datasource_id"
                     :parent-scoll-bottom-method="scrollToBottom"
                     @failed="() => onFailedReader(index)"
                     @completed="() => onCompletedReader(index)"

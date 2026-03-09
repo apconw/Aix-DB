@@ -80,7 +80,7 @@ def parallel_collect(state: AgentState, tasks: list[str] = None) -> AgentState:
 
     for task, future in futures.items():
         try:
-            result_state = future.result(timeout=180)  # 最多等待60秒
+            result_state = future.result(timeout=60)  # 单任务最多等待 60 秒，避免整体过慢
             results[task] = result_state
             logger.info(f"✅ 任务完成: {task}")
         except Exception as e:

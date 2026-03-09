@@ -44,11 +44,37 @@ async def unified_collect(state: AgentState) -> AgentState:
             # chart_config 为空，检查是否是因为查询结果为空
             execution_result = state.get("execution_result")
             if execution_result and execution_result.success and not execution_result.data:
-                # SQL执行成功但无数据，生成空结果卡片，让前端显示空结果提示并可查看SQL
-                logger.info("📊 SQL执行成功但无数据，生成空结果卡片")
+                # SQL执行成功但无数据，仍然返回表格模板（temp01），这样前端可以显示表格结构和分页控件
+                logger.info("📊 SQL执行成功但无数据，生成空表格")
+                # 尝试从 SQL 中提取列名
+                columns = []
+                generated_sql = state.get("generated_sql", "") or state.get("filtered_sql", "")
+                if generated_sql:
+                    try:
+                        # 简单的列名提取：从 SELECT 和 FROM 之间提取
+                        import re
+                        select_match = re.search(r'SELECT\s+(.*?)\s+FROM', generated_sql, re.IGNORECASE | re.DOTALL)
+                        if select_match:
+                            select_clause = select_match.group(1)
+                            # 分割列名（简单处理，不考虑复杂的子查询）
+                            col_parts = [c.strip() for c in select_clause.split(',')]
+                            for col in col_parts:
+                                # 提取别名或列名
+                                if ' AS ' in col.upper():
+                                    alias = col.split(' AS ')[-1].strip().strip('`').strip('"').strip("'")
+                                    columns.append(alias)
+                                else:
+                                    # 提取最后一个点号后面的部分（表名.列名 -> 列名）
+                                    col_name = col.strip().strip('`').strip('"').strip("'")
+                                    if '.' in col_name:
+                                        col_name = col_name.split('.')[-1]
+                                    columns.append(col_name)
+                    except Exception as e:
+                        logger.warning(f"从 SQL 提取列名失败: {e}")
+                
                 state["render_data"] = {
-                    "template_code": "temp05",
-                    "columns": [],
+                    "template_code": "temp01",  # 改为 temp01，显示表格
+                    "columns": columns if columns else [],
                     "data": [],
                 }
             else:

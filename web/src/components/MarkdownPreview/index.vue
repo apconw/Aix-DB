@@ -55,6 +55,7 @@ interface Props {
     recommended_questions?: string[]
   } | null
   recordId?: number // 记录ID，用于查询SQL语句
+  datasourceId?: number // 数据源ID，用于导出
 }
 
 // 解构 props
@@ -722,6 +723,7 @@ const currentQaOption = computed(() => {
               :chart-data="props.chartData"
               :record-id="props.recordId"
               :qa-type="props.qaType"
+              :datasource-id="props.datasourceId"
               @chart-rendered="() => onChartCompletedReader()"
               @table-rendered="() => onTableCompletedReader()"
             />

@@ -418,12 +418,36 @@ class DatasourceService:
         # 获取 embedding 客户端（支持在线/离线模型切换）
         embedding_client, model_name = DatasourceService._get_embedding_client()
 
+        all_embeddings = []
         try:
             if embedding_client and model_name:
                 # 使用在线模型批量计算
                 logger.info(f"批量计算 {len(docs)} 个表的 embedding（在线模型: {model_name}）...")
-                response = embedding_client.embeddings.create(model=model_name, input=docs)
-                data = response.data or []
+                # TODO 改为小批次计算 response = embedding_client.embeddings.create(model=model_name, input=docs) 避免出现InternalError.Algo.InvalidParameter: Value error, batch size is invalid, it should not be larger than 25.: input.contents
+                # 定义最大批次大小，根据报错信息设置为 25，为了安全也可以设为 20
+                MAX_BATCH_SIZE = 25
+                for i in range(0, len(docs), MAX_BATCH_SIZE):
+                    batch_docs = docs[i: i + MAX_BATCH_SIZE]
+                    try:
+                        # 对每个小批次发起请求
+                        response = embedding_client.embeddings.create(model=model_name, input=batch_docs)
+
+                        # 这里需要根据实际 response 结构提取 embeddings
+                        # 假设 response.data 是包含 embedding 对象的列表
+                        batch_embeddings = [item.embedding for item in response.data]
+                        all_embeddings.extend(batch_embeddings)
+
+                        # 可选：保存当前批次的结果到数据库，避免全部失败
+                        # self._save_embeddings_to_db(batch_docs, batch_embeddings)
+
+                    except Exception as e:
+                        # 记录错误日志，决定是跳过还是抛出
+                        logger.error(f"批量计算 embedding 失败，批次范围 {i}-{i + len(batch_docs)}: {e}")
+                        raise e  # 或者选择 continue 跳过当前批次
+
+                # response = embedding_client.embeddings.create(model=model_name, input=docs)
+
+                data = all_embeddings or []
 
                 if len(data) != len(tables_for_embedding):
                     logger.warning(
@@ -460,6 +484,7 @@ class DatasourceService:
                 logger.info(f"✅ 批量表 embedding 计算并保存成功（成功: {success_count}/{len(tables_for_embedding)}，维度: 768）")
         except Exception as e:
             logger.error(f"批量计算表 embedding 失败: {e}", exc_info=True)
+
 
     @staticmethod
     def update_datasource(session: Session, ds_id: int, data: Dict[str, Any]) -> Optional[Datasource]:

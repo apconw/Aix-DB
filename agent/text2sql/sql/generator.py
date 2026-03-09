@@ -22,6 +22,32 @@ from services.datasource_service import DatasourceService
 
 logger = logging.getLogger(__name__)
 
+# 用户明确要求「全部数据/导出/不限制条数」时的关键词，命中则生成 SQL 时不强制 LIMIT
+_FULL_DATA_OR_EXPORT_KEYWORDS = (
+    "不要限制",
+    "不限制条数",
+    "不要使用限制",
+    "无需限制",
+    "全部数据",
+    "所有数据",
+    "所有明细",
+    "全部明细",
+    "可以导出",
+    "需要导出",
+    "导出",
+    "无限制",
+    "不限条数",
+    "去掉限制",
+)
+
+
+def _user_wants_full_data_or_export(user_query: str) -> bool:
+    """判断用户是否明确要求查看全部数据或导出（不限制条数）。"""
+    if not (user_query and user_query.strip()):
+        return False
+    q = user_query.strip()
+    return any(kw in q for kw in _FULL_DATA_OR_EXPORT_KEYWORDS)
+
 
 def sql_generate(state: AgentState) -> AgentState:
     """
@@ -69,43 +95,29 @@ def sql_generate(state: AgentState) -> AgentState:
             except Exception as e:
                 logger.warning(f"获取数据源信息失败: {e}，使用默认值")
         
-        # 表关系补充：在 SQL 生成阶段补充缺失的关联表，并生成外键关系信息
-        # 这样可以在 SQL 生成时根据实际需要补充关联表，而不是在检索阶段就补充
-        try:
-            from agent.text2sql.database.db_service import DatabaseService
-            user_id = state.get("user_id")
-            
-            # 创建 DatabaseService 实例用于表关系补充
-            db_service = DatabaseService(datasource_id)
-            
-            # 获取所有表信息（用于补充关联表，使用缓存避免重复查询）
-            all_table_info = db_service._fetch_all_table_info(user_id=user_id, use_cache=True)
-            
-            # 获取当前选中的表名
-            selected_table_names = list(db_info.keys())
-            
-            # 补充关联表
-            supplemented_table_names = db_service.supplement_related_tables(
-                selected_table_names,
-                all_table_info
-            )
-            
-            # 无论是否补充新表，都用 all_table_info 中的数据（包含 foreign_keys）重建 db_info
-            # 这样可以确保已有表的外键关系也能传递到提示词中
-            new_db_info = {}
-            for table_name in supplemented_table_names:
-                if table_name in all_table_info:
-                    new_db_info[table_name] = all_table_info[table_name]
-                else:
-                    # 兜底：保持原来的表信息
-                    if table_name in db_info:
+        # 表关系补充：多表时才拉取全量表信息并补充关联表；单表时直接用 state 中的 db_info 以节省耗时
+        if len(db_info) > 1:
+            try:
+                from agent.text2sql.database.db_service import DatabaseService
+                user_id = state.get("user_id")
+                db_service = DatabaseService(datasource_id)
+                all_table_info = db_service._fetch_all_table_info(user_id=user_id, use_cache=True)
+                selected_table_names = list(db_info.keys())
+                supplemented_table_names = db_service.supplement_related_tables(
+                    selected_table_names,
+                    all_table_info
+                )
+                new_db_info = {}
+                for table_name in supplemented_table_names:
+                    if table_name in all_table_info:
+                        new_db_info[table_name] = all_table_info[table_name]
+                    elif table_name in db_info:
                         new_db_info[table_name] = db_info[table_name]
-            
-            db_info = new_db_info
-            state["db_info"] = db_info
-            logger.debug(f"表关系补充完成，当前 db_info 包含 {len(db_info)} 张表")
-        except Exception as e:
-            logger.warning(f"表关系补充失败: {e}，继续使用原始表列表", exc_info=True)
+                db_info = new_db_info
+                state["db_info"] = db_info
+                logger.debug(f"表关系补充完成，当前 db_info 包含 {len(db_info)} 张表")
+            except Exception as e:
+                logger.warning(f"表关系补充失败: {e}，继续使用原始表列表", exc_info=True)
         
         # 格式化 schema 为 M-Schema 格式（包含补充的关联表）
         schema_str = format_schema_to_m_schema(
@@ -122,36 +134,45 @@ def sql_generate(state: AgentState) -> AgentState:
         # 使用 PromptBuilder 构建提示词
         prompt_builder = PromptBuilder()
         
-        # RAG 增强检索：检索术语和训练示例
+        # RAG 增强检索：检索术语和训练示例（带超时，避免拖慢整体）
+        terminologies = ""
+        data_training = ""
         try:
-            from agent.text2sql.rag.terminology_retriever import retrieve_terminologies
-            import asyncio
-            
-            # 检索术语（同步调用）
-            terminologies = retrieve_terminologies(
-                question=state["user_query"],
-                datasource_id=datasource_id,
-                oid=1,  # 默认组织ID，后续可以从用户信息获取
-                top_k=10,
-            )
-            
-            # 检索训练示例
-            from agent.text2sql.rag.training_retriever import retrieve_training_examples
-            data_training = retrieve_training_examples(
-                question=state["user_query"],
-                datasource_id=datasource_id,
-                oid=1,  # 默认组织ID，后续可以从用户信息获取
-                top_k=5,
-            )
-        except Exception as e:
-            logger.warning(f"RAG 检索失败: {e}，使用空字符串")
-            terminologies = ""
-            data_training = ""
+            from concurrent.futures import ThreadPoolExecutor, TimeoutError as FuturesTimeoutError
+            RAG_TIMEOUT = int(__import__("os").getenv("SQL_RAG_TIMEOUT", "4"))
+
+            def _do_rag():
+                from agent.text2sql.rag.terminology_retriever import retrieve_terminologies
+                from agent.text2sql.rag.training_retriever import retrieve_training_examples
+                t = retrieve_terminologies(
+                    question=state["user_query"],
+                    datasource_id=datasource_id,
+                    oid=1,
+                    top_k=5,
+                )
+                d = retrieve_training_examples(
+                    question=state["user_query"],
+                    datasource_id=datasource_id,
+                    oid=1,
+                    top_k=3,
+                )
+                return t, d
+
+            with ThreadPoolExecutor(max_workers=1) as ex:
+                f = ex.submit(_do_rag)
+                terminologies, data_training = f.result(timeout=RAG_TIMEOUT)
+        except (FuturesTimeoutError, Exception) as e:
+            if "Timeout" in type(e).__name__ or "timeout" in str(e).lower():
+                logger.debug("RAG 检索超时，跳过术语与训练示例")
+            else:
+                logger.warning(f"RAG 检索失败: {e}，使用空字符串")
         
         custom_prompt = ""  # 自定义提示词（暂时为空）
         error_msg = ""  # 错误消息（暂时为空）
         
         # 获取系统提示词和用户提示词
+        # 用户明确要求全部数据/导出时不强制 LIMIT，否则默认限制 40 条
+        enable_query_limit = not _user_wants_full_data_or_export(state.get("user_query", ""))
         system_prompt, user_prompt = prompt_builder.build_sql_prompt(
             db_type=db_type,
             schema=schema_str,
@@ -161,7 +182,7 @@ def sql_generate(state: AgentState) -> AgentState:
             terminologies=terminologies,
             data_training=data_training,
             custom_prompt=custom_prompt,
-            enable_query_limit=True,  # 启用查询限制
+            enable_query_limit=enable_query_limit,
             error_msg=error_msg,
             current_time=datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
             change_title=False,  # 暂时不生成对话标题

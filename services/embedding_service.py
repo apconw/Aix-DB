@@ -85,8 +85,11 @@ async def generate_embedding(text: str) -> Optional[List[float]]:
                 return response.data[0].embedding
 
     except Exception as e:
-        traceback.print_exc()
-        logger.warning(f"Failed to generate embedding with online model: {e}, falling back to local CPU model")
+        # 在线 embedding 失败时降级为本地模型，避免在控制台打印完整异常堆栈
+        logger.warning(
+            "Failed to generate embedding with online model: %s, falling back to local CPU model",
+            e,
+        )
         # 在线模型失败时，回退到本地模型
         from common.local_embedding import generate_embedding_local
         return await generate_embedding_local(text)

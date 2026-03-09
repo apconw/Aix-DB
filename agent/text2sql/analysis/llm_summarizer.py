@@ -1,4 +1,5 @@
 import logging
+import os
 from datetime import datetime, date
 import json
 import re
@@ -11,6 +12,11 @@ from agent.text2sql.state.agent_state import AgentState
 from agent.text2sql.template.prompt_builder import PromptBuilder
 
 logger = logging.getLogger(__name__)
+
+# 总结时最多带入的数据行数，避免 prompt 过大拖慢 LLM（可配置）
+SUMMARIZE_MAX_ROWS = int(os.getenv("SUMMARIZE_MAX_ROWS", "25"))
+# 总结时数据 JSON 最大字符数，超出则截断并注明（可配置）
+SUMMARIZE_MAX_CHARS = int(os.getenv("SUMMARIZE_MAX_CHARS", "12000"))
 """
 大模型数据总结节点
 """
@@ -65,14 +71,16 @@ def summarize(state: AgentState):
     prompt_builder = PromptBuilder()
 
     try:
-        # 获取数据结果
+        # 获取数据结果，限制行数与长度以加快 LLM 总结
         data_result = state["execution_result"].data
-        
-        # 如果数据是字典或列表，转换为JSON字符串
+        if isinstance(data_result, list) and len(data_result) > SUMMARIZE_MAX_ROWS:
+            data_result = data_result[:SUMMARIZE_MAX_ROWS]
         if isinstance(data_result, (dict, list)):
             data_result_str = json.dumps(data_result, ensure_ascii=False, indent=2, cls=DecimalEncoder)
         else:
             data_result_str = str(data_result)
+        if len(data_result_str) > SUMMARIZE_MAX_CHARS:
+            data_result_str = data_result_str[:SUMMARIZE_MAX_CHARS] + "\n\n...（数据已截断，仅展示前一部分供总结）"
         
         # 获取当前时间
         current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
