@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { computed, onBeforeUnmount, onMounted, ref, watch, nextTick } from 'vue'
+import { computed, onBeforeUnmount, onMounted, reactive, ref, watch, nextTick } from 'vue'
 import type { PropType } from 'vue'
 import { useBusinessStore } from '@/store/business'
 import type { DataTableColumns } from 'naive-ui'
@@ -23,6 +23,10 @@ const props = defineProps({
     default: null,
   },
   recordId: {
+    type: Number,
+    default: null,
+  },
+  datasourceId: {
     type: Number,
     default: null,
   },
@@ -51,7 +55,18 @@ const chartData = computed(() => {
 })
 const templateCode = computed(() => chartData.value?.template_code || '')
 const columns = computed(() => chartData.value?.columns || [])
-const data = computed(() => chartData.value?.data || [])
+
+// 远程分页数据（若存在）优先，其次回退到原始 chartData.data
+const tableData = ref<any[]>([])
+const tableLoading = ref(false)
+const hasAttemptedFetch = ref(false)
+
+const data = computed(() => {
+  if (tableData.value && tableData.value.length > 0) {
+    return tableData.value
+  }
+  return chartData.value?.data || []
+})
 
 // 图表容器引用
 const chartContainerRef = ref<HTMLElement | null>(null)
@@ -62,41 +77,38 @@ const tableColumns = computed<DataTableColumns<any>>(() => {
   if (columns.value.length === 0 || data.value.length === 0) {
     return []
   }
-  
   return columns.value.map((colName: string) => ({
     title: colName,
     key: colName,
     width: 120,
     minWidth: 80,
     maxWidth: 200,
-    ellipsis: {
-      tooltip: true,
-    },
+    ellipsis: { tooltip: true },
   }))
 })
 
 // 计算表格横向滚动宽度（根据列数和列宽动态计算）
 const tableScrollX = computed(() => {
   const colCount = columns.value.length
-  if (colCount === 0) {
-    return undefined
-  }
-  // 根据列数和列宽计算，每列平均宽度约150px，确保有足够空间
-  return colCount * 150
+  return colCount === 0 ? undefined : colCount * 150
 })
 
-// 分页配置
-const pagination = ref({
+// 分页配置：使用 reactive 而非 computed，避免 NaiveUI 因对象引用变化而重置内部状态
+// 需配合 n-data-table 的 :remote="true" 使用，告知组件分页由后端控制
+const pagination = reactive({
   page: 1,
   pageSize: 10,
+  itemCount: 0,
   showSizePicker: true,
-  pageSizes: [5, 10, 20],
-  onChange: (page: number) => {
-    pagination.value.page = page
+  pageSizes: [10, 20, 50, 100],
+  onChange: async (page: number) => {
+    pagination.page = page
+    await fetchTablePage()
   },
-  onUpdatePageSize: (pageSize: number) => {
-    pagination.value.pageSize = pageSize
-    pagination.value.page = 1
+  onUpdatePageSize: async (pageSize: number) => {
+    pagination.pageSize = pageSize
+    pagination.page = 1
+    await fetchTablePage()
   },
 })
 
@@ -124,6 +136,11 @@ const isDatabaseQa = computed(() => {
 // 判断是否应该显示SQL按钮（数据问答和表格问答都支持）
 const shouldShowSqlButton = computed(() => {
   return (props.qaType === 'DATABASE_QA' || props.qaType === 'FILEDATA_QA') && props.recordId
+})
+
+// 判断是否应该显示导出按钮（仅数据问答，且有记录和数据源ID）
+const shouldShowExportButton = computed(() => {
+  return props.qaType === 'DATABASE_QA' && !!props.recordId && !!props.datasourceId && templateCode.value === 'temp01'
 })
 
 // 格式化SQL语句：复用全局 SQL 格式化工具，保证与系统其它页面一致
@@ -166,6 +183,134 @@ const handleShowSql = async () => {
 const handleShowChart = () => {
   showSqlView.value = false
 }
+
+// 从后端分页接口获取当前页数据
+const fetchTablePage = async () => {
+  if (!props.recordId || !props.datasourceId || templateCode.value !== 'temp01' || props.qaType !== 'DATABASE_QA') {
+    return
+  }
+
+  try {
+    // 确保已获取 SQL
+    if (!sqlStatement.value && !isLoadingSql.value) {
+      isLoadingSql.value = true
+      try {
+        const res = await GlobalAPI.get_record_sql(props.recordId)
+        if (res.ok) {
+          const data = await res.json()
+          sqlStatement.value = data.data?.sql_statement || ''
+        } else {
+          window.$ModalMessage.error('获取SQL失败，无法分页')
+          sqlStatement.value = ''
+          return
+        }
+      } finally {
+        isLoadingSql.value = false
+      }
+    }
+
+    if (!sqlStatement.value) {
+      return
+    }
+    tableLoading.value = true
+    const res = await GlobalAPI.table_page(sqlStatement.value, props.datasourceId, pagination.page, pagination.pageSize)
+    if (!res.ok) {
+      window.$ModalMessage.error('分页查询失败')
+      return
+    }
+    const payload = await res.json()
+    const pageData = payload.data || payload
+    pagination.itemCount = pageData.total || 0
+
+    // API 返回的行使用英语键名（原始 SQL 列名），而 columns 使用中文名作为 key
+    // 需要按位置将英语键映射为中文键，保持与 chartData.data 结构一致
+    const rawRows: any[] = pageData.rows || []
+    const chineseColumns = columns.value
+    if (rawRows.length > 0 && chineseColumns.length > 0) {
+      const englishKeys = Object.keys(rawRows[0])
+      if (englishKeys.length === chineseColumns.length) {
+        tableData.value = rawRows.map((row: any) => {
+          const remapped: Record<string, any> = {}
+          englishKeys.forEach((engKey, idx) => {
+            remapped[chineseColumns[idx]] = row[engKey]
+          })
+          return remapped
+        })
+      } else {
+        // 列数不匹配时直接使用原始数据（避免错位）
+        tableData.value = rawRows
+      }
+    } else {
+      tableData.value = rawRows
+    }
+  } catch (error) {
+    console.error('❌ 分页查询异常:', error)
+    window.$ModalMessage.error('分页查询异常，请稍后重试')
+  } finally {
+    tableLoading.value = false
+  }
+}
+
+// 导出当前记录对应的表格数据为 CSV
+const handleExportTable = async () => {
+  if (!props.recordId || !props.datasourceId) return
+
+  try {
+    // 1. 先获取该记录的 SQL 语句
+    if (!sqlStatement.value) {
+      isLoadingSql.value = true
+      try {
+        const res = await GlobalAPI.get_record_sql(props.recordId)
+        if (res.ok) {
+          const data = await res.json()
+          sqlStatement.value = data.data?.sql_statement || ''
+        } else {
+          window.$ModalMessage.error('获取SQL失败，无法导出')
+          return
+        }
+      } finally {
+        isLoadingSql.value = false
+      }
+    }
+
+    if (!sqlStatement.value) {
+      window.$ModalMessage.error('SQL 为空，无法导出')
+      return
+    }
+
+    // 2. 调用导出接口，下载 CSV
+    await GlobalAPI.export_table_csv(sqlStatement.value, props.datasourceId, 'data_export')
+    window.$ModalMessage.success('导出任务已开始，如浏览器未弹出下载，请检查弹窗拦截设置')
+  } catch (error) {
+    console.error('导出失败:', error)
+    window.$ModalMessage.error('导出失败，请稍后重试')
+  }
+}
+
+// 当 recordId 变化时，重置分页状态
+watch(
+  () => props.recordId,
+  () => {
+    hasAttemptedFetch.value = false
+    tableData.value = []
+    pagination.page = 1
+    pagination.itemCount = 0
+  }
+)
+
+// 当表格首次渲染且是数据问数表格时，自动加载第一页数据
+watch(
+  () => ({ tpl: templateCode.value, qa: props.qaType, rid: props.recordId, ds: props.datasourceId }),
+  async (val) => {
+    if (val.tpl === 'temp01' && val.qa === 'DATABASE_QA' && val.rid && val.ds) {
+      if (!hasAttemptedFetch.value) {
+        hasAttemptedFetch.value = true
+        await fetchTablePage()
+      }
+    }
+  },
+  { immediate: true },
+)
 
 // 复制SQL语句
 const handleCopySql = async () => {
@@ -273,8 +418,8 @@ const renderChart = async () => {
               whiteSpace: 'pre-wrap',
               overflow: 'hidden',
               textOverflow: 'ellipsis',
-              fontSize: 16,
-              fontWeight: 500,
+              fontSize: '16px',
+              fontWeight: '500',
               color: '#333',
             },
             content: '',
@@ -284,7 +429,7 @@ const renderChart = async () => {
           type: 'inner',
           offset: '-50%',
           content: ({ percent, name }) => {
-            const percentValue = (percent * 100).toFixed(1)
+            const percentValue = Number((percent * 100).toFixed(1))
             return percentValue > 5 ? `${name}\n${percentValue}%` : ''
           },
           style: {
@@ -797,9 +942,6 @@ const renderChart = async () => {
               stroke: '#667eea',
               lineWidth: 2,
             },
-            point: {
-              visible: false,
-            },
           },
           handlerStyle: {
             fill: '#667eea',
@@ -919,6 +1061,33 @@ onBeforeUnmount(() => {
               </svg>
             </template>
           </n-button>
+
+          <!-- 导出按钮：仅数据问答 + 有记录ID和数据源ID 时显示 -->
+          <n-button
+            v-if="shouldShowExportButton && !showSqlView && templateCode === 'temp01'"
+            quaternary
+            size="small"
+            type="primary"
+            class="header-icon-btn"
+            @click="handleExportTable"
+          >
+            <template #icon>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                class="icon-svg"
+              >
+                <path d="M4 20h16"></path>
+                <path d="M12 4v12"></path>
+                <path d="M8 12l4 4 4-4"></path>
+              </svg>
+            </template>
+          </n-button>
           
           <!-- 图表图标按钮（显示SQL时显示） -->
           <n-button
@@ -957,9 +1126,11 @@ onBeforeUnmount(() => {
             <!-- 表格渲染 -->
             <div v-if="templateCode === 'temp01'" class="table-container">
               <n-data-table
+                remote
                 :columns="tableColumns"
                 :data="data"
                 :pagination="pagination"
+                :loading="tableLoading"
                 :striped="true"
                 :single-line="false"
                 size="small"

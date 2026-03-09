@@ -16,6 +16,7 @@ from model.schemas import (
     DifyGetSuggestedResponse,
     StopChatRequest,
     StopChatResponse,
+    ExportTableRequest,
     get_schema,
 )
 

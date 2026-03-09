@@ -179,7 +179,8 @@ def _get_local_embedding_model():
                 return None
 
         except Exception as e:
-            logger.error(f"Failed to load local embedding model: {e}", exc_info=True)
+            # 本地 embedding 模型加载失败时只输出简要错误，避免在控制台刷堆栈
+            logger.warning("Failed to load local embedding model: %s", e)
             return None
 
 

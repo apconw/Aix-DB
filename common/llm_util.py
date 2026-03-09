@@ -73,13 +73,28 @@ def get_llm(temperature=0.75, timeout=None):
                     f"[ERROR] Failed to import ChatOpenAI, please check langchain-openai/langsmith/opentelemetry installation: {e}"
                 )
                 raise
+            # 构造额外参数，强制关闭 thinking 模式以适配非流式请求
+            # 某些后端通过 default_headers 传递，某些通过 extra_body
+            # 这里优先使用 default_headers 覆盖，防止默认开启 thinking 导致报错
+            extra_headers = {
+                "enable_thinking": "false",
+                # 如果后端需要布尔值而不是字符串，可能需要特定处理，但 HTTP 头通常是字符串
+                # 对于某些兼容层，可能需要放在 extra_body 中
+            }
 
+            # 针对部分后端（如 volcengine, some vLLM setups），参数可能在 body 里
+            extra_body = {
+                "enable_thinking": False
+            }
             return ChatOpenAI(
                 model=model_name,
                 temperature=temperature,
                 base_url=model_base_url,
                 api_key=model_api_key or "empty",  # Ensure not None
                 timeout=timeout,  # 设置超时时间（秒）
+                # 关键修改：传入额外参数以禁用 thinking
+                default_headers=extra_headers,
+                extra_body=extra_body,
             )
 
         def _get_ollama():

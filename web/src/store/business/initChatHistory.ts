@@ -281,18 +281,20 @@ export const fetchConversationHistory = async function fetchConversationHistory(
                 file_key: file_key_json,
                 role: 'user',
                 reader: null,
-                record_id: record.id, // 添加record_id
+                record_id: record.id,
+                datasource_id: record.datasource_id,
               })
 
               itemsToAdd.push({
                 chat_id: chat_id_str,
                 qa_type: qa_type_str,
-                question: '', // 修复：assistant 不应该显示用户问题
+                question: '',
                 file_key: [],
                 role: 'assistant',
                 reader,
-                chartData, // 从历史数据中提取的图表数据
-                record_id: record.id, // 添加record_id
+                chartData,
+                record_id: record.id,
+                datasource_id: record.datasource_id,
               })
             }
           }

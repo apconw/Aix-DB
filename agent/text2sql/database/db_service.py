@@ -12,9 +12,9 @@ import logging
 import os
 import re
 import time
-from typing import Dict, List, Tuple, Optional
+from typing import Dict, List, Tuple, Optional, Set
 from threading import Lock
-from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 import faiss
 import jieba
@@ -33,7 +33,7 @@ from model.db_connection_pool import get_db_pool
 from model.db_models import TAiModel, TDsPermission, TDsRules
 from model.datasource_models import DatasourceTable, DatasourceField
 from agent.text2sql.permission.permission_retriever import get_user_permission_filters
-from sqlalchemy import select
+from sqlalchemy import select, update
 
 # 日志配置
 logger = logging.getLogger(__name__)
@@ -44,11 +44,55 @@ db_pool = get_db_pool()
 
 # 返回表数量配置（可配置，默认 6 个）
 TABLE_RETURN_COUNT = int(os.getenv("TABLE_RETURN_COUNT", "6"))
+# 候选表数量少于此值时跳过 Rerank，直接使用 BM25+向量顺序以节省耗时（默认 3）
+RERANK_SKIP_WHEN_CANDIDATES_LE = int(os.getenv("RERANK_SKIP_WHEN_CANDIDATES_LE", "3"))
+# 向量检索 top_k（默认 12，过大增加融合计算量）
+VECTOR_RETRIEVE_TOP_K = int(os.getenv("VECTOR_RETRIEVE_TOP_K", "12"))
+
+# 表结构并行加载的线程数（0 表示不并行，使用串行）
+TABLE_FETCH_MAX_WORKERS = int(os.getenv("TABLE_FETCH_MAX_WORKERS", "8"))
 
 # 缓存配置
 _table_info_cache: Dict[Tuple[int, Optional[int]], Tuple[Dict[str, Dict], float]] = {}
 _cache_lock = Lock()
 CACHE_TTL = int(os.getenv("TABLE_INFO_CACHE_TTL", "300"))  # 缓存有效期（秒），默认5分钟
+
+
+def _fetch_one_table_via_inspector(engine, table_name: str, column_permissions: Dict[str, Set[str]]) -> Tuple[str, Optional[Dict]]:
+    """
+    在独立连接上拉取单表 schema（供并行调用）。
+    返回 (table_name, table_info_dict) 或 (table_name, None) 表示跳过。
+    """
+    try:
+        with engine.connect() as conn:
+            insp = inspect(conn)
+            columns = {}
+            for col in insp.get_columns(table_name):
+                if table_name in column_permissions and col["name"] not in column_permissions[table_name]:
+                    continue
+                columns[col["name"]] = {
+                    "type": str(col["type"]),
+                    "comment": str(col["comment"] or ""),
+                }
+            if not columns:
+                return table_name, None
+            foreign_keys = [
+                f"{fk['constrained_columns'][0]} -> {fk['referred_table']}.{fk['referred_columns'][0]}"
+                for fk in insp.get_foreign_keys(table_name)
+            ]
+            try:
+                info = insp.get_table_comment(table_name)
+                comment = (info.get("text") or info.get("comment") or "") if isinstance(info, dict) else (info or "")
+            except Exception:
+                comment = ""
+            return table_name, {
+                "columns": columns,
+                "foreign_keys": foreign_keys,
+                "table_comment": str(comment).strip() if comment else "",
+            }
+    except Exception as e:
+        logger.debug(f"读取表 {table_name} 结构失败: {e}")
+        return table_name, None
 
 
 # 嵌入模型配置
@@ -467,39 +511,26 @@ class DatabaseService:
                 logger.warning(f"⚠️ 获取列权限失败: {e}", exc_info=True)
 
         table_info = {}
-        for table_name in table_names:
-            try:
-                columns = {}
-                for col in inspector.get_columns(table_name):
-                    # 权限过滤：如果配置了列权限，只返回有权限的字段
-                    if table_name in column_permissions:
-                        if col["name"] not in column_permissions[table_name]:
-                            continue
-
-                    columns[col["name"]] = {
-                        "type": str(col["type"]),
-                        "comment": str(col["comment"] or ""),
-                    }
-
-                # 如果过滤后没有字段，跳过该表
-                if not columns:
-                    logger.debug(f"⚠️ 表 {table_name} 无可用字段（权限过滤后），跳过")
-                    continue
-
-                foreign_keys = [
-                    f"{fk['constrained_columns'][0]} -> {fk['referred_table']}.{fk['referred_columns'][0]}"
-                    for fk in inspector.get_foreign_keys(table_name)
-                ]
-
-                table_comment = self._get_table_comment(table_name)
-
-                table_info[table_name] = {
-                    "columns": columns,
-                    "foreign_keys": foreign_keys,
-                    "table_comment": table_comment,
+        workers = TABLE_FETCH_MAX_WORKERS
+        if workers > 0 and len(table_names) > 1:
+            # 并行加载多表 schema，减少总耗时
+            workers = min(workers, len(table_names), (os.cpu_count() or 4) * 2)
+            logger.info(f"🔀 使用 {workers} 个线程并行加载表结构")
+            with ThreadPoolExecutor(max_workers=workers) as executor:
+                futures = {
+                    executor.submit(_fetch_one_table_via_inspector, self._engine, tn, column_permissions): tn
+                    for tn in table_names
                 }
-            except Exception as e:
-                logger.error(f"❌ 读取表 {table_name} 结构失败: {e}")
+                for future in as_completed(futures):
+                    _name, info = future.result()
+                    if info is not None:
+                        table_info[_name] = info
+        else:
+            # 串行加载（兼容 TABLE_FETCH_MAX_WORKERS=0 或单表）
+            for table_name in table_names:
+                _name, info = _fetch_one_table_via_inspector(self._engine, table_name, column_permissions)
+                if info is not None:
+                    table_info[_name] = info
 
         elapsed = time.time() - start_time
         logger.info(f"✅ 成功加载 {len(table_info)} 张表，耗时 {elapsed:.2f}s")
@@ -588,6 +619,31 @@ class DatabaseService:
 
         return table_info
 
+    def _get_table_names_in_metadata(self) -> Set[str]:
+        """
+        返回当前数据源在 t_datasource_table 中存在的表名集合（大写，用于匹配）。
+        同时包含「短名」（即 schema.table 的 table 部分），以便与 inspector 返回的 schema.table 形式匹配。
+        """
+        if not self._datasource_id:
+            return set()
+        try:
+            with db_pool.get_session() as session:
+                tables = (
+                    session.query(DatasourceTable.table_name)
+                    .filter(DatasourceTable.ds_id == self._datasource_id)
+                    .all()
+                )
+                out = set()
+                for row in tables:
+                    key = str(row[0]).upper()
+                    out.add(key)
+                    if "." in key:
+                        out.add(key.split(".")[-1])
+                return out
+        except Exception as e:
+            logger.warning(f"⚠️ 获取元数据表名失败: {e}")
+            return set()
+
     def _get_precomputed_embeddings(self, table_info: Dict[str, Dict]) -> Tuple[Optional[np.ndarray], List[str], List[str]]:
         """
         尝试从数据库获取预计算的 embedding。
@@ -608,8 +664,13 @@ class DatabaseService:
                     .all()
                 )
 
-                # 构建表名到表的映射（不区分大小写，兼容 Oracle 等会返回大写表名的数据库）
-                table_map = {str(table.table_name).upper(): table for table in tables}
+                # 构建表名到表的映射（不区分大小写；同时支持「短名」以便 schema.table 与 table 互匹配）
+                table_map = {}
+                for table in tables:
+                    key = str(table.table_name).upper()
+                    table_map[key] = table
+                    if "." in key:
+                        table_map[key.split(".")[-1]] = table
 
                 # 收集有预计算 embedding 的表
                 precomputed_embeddings = []
@@ -617,8 +678,8 @@ class DatabaseService:
                 missing_table_names = []
 
                 for table_name, info in table_info.items():
-                    # 统一按大写匹配，避免 T_ALARM_INFO / t_alarm_info 不一致导致无法命中
-                    table = table_map.get(str(table_name).upper())
+                    key_upper = str(table_name).upper()
+                    table = table_map.get(key_upper) or (table_map.get(key_upper.split(".")[-1]) if "." in key_upper else None)
                     # 检查是否有 embedding 字段（通过 hasattr 检查，避免字段不存在时报错）
                     if table and hasattr(table, 'embedding') and table.embedding:
                         try:
@@ -689,71 +750,171 @@ class DatabaseService:
             logger.info(f"✅ 离线模型嵌入生成完成，耗时 {time.time() - start_time:.2f}s，维度: {embedding_dim}")
             return embeddings
 
-        # 使用在线模型
-        logger.info(f"🌐 调用在线嵌入模型 {self.embedding_model_name}...")
+        # 使用在线模型（批量请求以降低延迟，单次最多 25 条避免 API 限流）
+        logger.info(f"🌐 调用在线嵌入模型 {self.embedding_model_name}（批量）...")
         start_time = time.time()
+        EMBEDDING_BATCH_SIZE = 25
         embeddings = []
-        for doc in texts:
+        for i in range(0, len(texts), EMBEDDING_BATCH_SIZE):
+            batch = texts[i : i + EMBEDDING_BATCH_SIZE]
             try:
-                response = self.embedding_client.embeddings.create(model=self.embedding_model_name, input=doc)
-                embeddings.append(response.data[0].embedding)
+                response = self.embedding_client.embeddings.create(
+                    model=self.embedding_model_name, input=batch
+                )
+                for item in response.data:
+                    embeddings.append(item.embedding)
             except Exception as e:
-                logger.error(f"❌ 在线模型嵌入生成失败 ({doc[:30]}...): {e}")
-                embeddings.append(np.zeros(1024))  # 占位符
-
+                logger.warning(f"⚠️ 在线模型批量嵌入失败 (batch {i}-{i+len(batch)}): {e}，逐条回退")
+                for doc in batch:
+                    try:
+                        r = self.embedding_client.embeddings.create(
+                            model=self.embedding_model_name, input=doc
+                        )
+                        embeddings.append(r.data[0].embedding)
+                    except Exception as e2:
+                        logger.error(f"❌ 单条嵌入失败: {e2}")
+                        embeddings.append(np.zeros(1024))
+        if len(embeddings) != len(texts):
+            logger.warning(f"⚠️ 嵌入数量与输入不一致: {len(embeddings)} vs {len(texts)}")
         embeddings = np.array(embeddings).astype("float32")
         faiss.normalize_L2(embeddings)
         logger.info(f"✅ 在线模型嵌入生成完成，耗时 {time.time() - start_time:.2f}s")
         return embeddings
 
+    def _save_table_embeddings_to_db(self, table_names: List[str], embeddings: np.ndarray) -> None:
+        """
+        将表结构 embedding 写入数据库 t_datasource_table.embedding。
+        table_names 与 embeddings 逐行对应。
+        """
+        if not self._datasource_id or not table_names or embeddings.size == 0:
+            return
+        try:
+            with db_pool.get_session() as session:
+                tables = (
+                    session.query(DatasourceTable)
+                    .filter(DatasourceTable.ds_id == self._datasource_id)
+                    .all()
+                )
+                name_to_id = {str(t.table_name).upper(): t.id for t in tables}
+                saved = 0
+                for i, table_name in enumerate(table_names):
+                    if i >= len(embeddings):
+                        break
+                    key_upper = str(table_name).strip().upper()
+                    table_id = name_to_id.get(key_upper)
+                    if not table_id and "." in key_upper:
+                        key_short = key_upper.split(".")[-1]
+                        table_id = name_to_id.get(key_short)
+                    if not table_id:
+                        continue
+                    emb_list = embeddings[i].tolist() if hasattr(embeddings[i], "tolist") else list(embeddings[i])
+                    stmt = (
+                        update(DatasourceTable)
+                        .where(DatasourceTable.id == table_id)
+                        .values(embedding=json.dumps(emb_list))
+                    )
+                    session.execute(stmt)
+                    saved += 1
+                session.commit()
+                logger.info(f"✅ 已保存 {saved}/{len(table_names)} 张表的 embedding 到数据库")
+        except Exception as e:
+            logger.warning(f"⚠️ 保存表 embedding 到数据库失败: {e}", exc_info=True)
+
     def _initialize_vector_index(self, table_info: Dict[str, Dict]):
         """
-        初始化 FAISS 向量索引：从数据库读取预计算的 embedding 并构建内存索引。
-        仅使用预计算的 embedding，不在检索时做实时计算。
+        初始化 FAISS 向量索引：优先从数据库读取预计算的 embedding；
+        若没有任何预计算或部分表缺失，则实时计算表结构 embedding 并写入数据库，再构建索引。
         """
         if self._index_initialized:
             return
 
-        # 构建新索引
         logger.info("🏗️ 开始构建向量索引（从数据库读取 embedding）...")
         start_time = time.time()
 
-        # 记录所有表名和语料（用于 BM25 等）
-        self._table_names = list(table_info.keys())
-        self._corpus = [self._build_document(name, info) for name, info in table_info.items()]
+        # 仅对「已在 t_datasource_table 中存在」的表建索引并持久化 embedding，避免对未同步到元数据的表重复计算且无法保存
+        tables_in_metadata = self._get_table_names_in_metadata()
+        def _in_metadata(name: str) -> bool:
+            u = str(name).strip().upper()
+            return u in tables_in_metadata or (u.split(".")[-1] if "." in u else u) in tables_in_metadata
+        table_info_indexed = {k: v for k, v in table_info.items() if _in_metadata(k)}
+        skipped_count = len(table_info) - len(table_info_indexed)
+        if skipped_count > 0:
+            logger.info(f"📋 向量索引仅针对元数据中已存在的表：共 {len(table_info_indexed)} 张，跳过 {skipped_count} 张（仅存在于实时库、未在元数据中）")
+        if not table_info_indexed:
+            logger.warning("⚠️ 元数据中无表记录，无法构建向量索引，仅使用 BM25")
+            self._faiss_index = None
+            self._index_initialized = True
+            return
 
-        # 从数据库获取预计算的 embedding（不会做任何实时计算）
+        self._table_names = list(table_info_indexed.keys())
+        self._corpus = [self._build_document(name, info) for name, info in table_info_indexed.items()]
+
         precomputed_embeddings, precomputed_table_names, missing_table_names = self._get_precomputed_embeddings(
-            table_info
+            table_info_indexed
         )
 
-        # 如果没有任何预计算 embedding，则禁用向量索引（仅使用 BM25）
+        # 情况1：没有任何预计算 → 实时计算全部表 embedding，写入 DB，再建索引
         if precomputed_embeddings is None or len(precomputed_table_names) == 0:
-            logger.warning("⚠️ 未找到任何预计算的表结构 embedding，向量检索将被禁用，仅使用 BM25")
-            self._faiss_index = None
+            logger.warning("⚠️ 未找到任何预计算的表结构 embedding，将实时计算并写入数据库后构建向量索引")
+            try:
+                embeddings = self._create_embeddings_with_dashscope(self._corpus)
+                if embeddings is not None and embeddings.size > 0:
+                    self._save_table_embeddings_to_db(self._table_names, embeddings)
+                    dimension = embeddings.shape[1]
+                    self._faiss_index = faiss.IndexFlatIP(dimension)
+                    self._faiss_index.add(embeddings)
+                    elapsed = time.time() - start_time
+                    logger.info(f"🎉 向量索引构建完成（已计算并保存 {len(self._table_names)} 张表），耗时 {elapsed:.2f}s")
+                else:
+                    logger.warning("⚠️ 实时计算 embedding 失败，向量检索将被禁用，仅使用 BM25")
+                    self._faiss_index = None
+            except Exception as e:
+                logger.warning(f"⚠️ 实时计算表 embedding 失败: {e}，向量检索将被禁用", exc_info=True)
+                self._faiss_index = None
             self._index_initialized = True
             return
 
         # 如果存在缺失的 embedding，为避免索引和表顺序不一致，这里直接禁用向量检索
         if len(missing_table_names) > 0:
             logger.warning(
-                f"⚠️ 共有 {len(missing_table_names)} 张表缺少预计算 embedding，"
-                "为保证索引与表顺序一致，本次禁用向量检索，仅使用 BM25"
+                f"⚠️ 共有 {len(missing_table_names)} 张表缺少预计算 embedding，将实时计算缺失部分并合并后构建索引"
             )
-            self._faiss_index = None
+            try:
+                missing_corpus = [self._build_document(name, table_info_indexed[name]) for name in missing_table_names]
+                missing_embeddings = self._create_embeddings_with_dashscope(missing_corpus)
+                if missing_embeddings is None or missing_embeddings.size == 0:
+                    raise ValueError("缺失表的 embedding 计算失败")
+                name_to_precomputed_idx = {name: i for i, name in enumerate(precomputed_table_names)}
+                name_to_missing_idx = {name: i for i, name in enumerate(missing_table_names)}
+                merged_list = []
+                for name in self._table_names:
+                    if name in name_to_precomputed_idx:
+                        merged_list.append(precomputed_embeddings[name_to_precomputed_idx[name]])
+                    else:
+                        merged_list.append(missing_embeddings[name_to_missing_idx[name]])
+                embeddings = np.array(merged_list).astype("float32")
+                faiss.normalize_L2(embeddings)
+                self._save_table_embeddings_to_db(missing_table_names, missing_embeddings)
+                dimension = embeddings.shape[1]
+                self._faiss_index = faiss.IndexFlatIP(dimension)
+                self._faiss_index.add(embeddings)
+                elapsed = time.time() - start_time
+                logger.info(f"🎉 向量索引构建完成（已补全 {len(missing_table_names)} 张表），共 {len(self._table_names)} 张表，耗时 {elapsed:.2f}s")
+            except Exception as e:
+                logger.warning(f"⚠️ 补全缺失 embedding 失败: {e}，本次禁用向量检索", exc_info=True)
+                self._faiss_index = None
             self._index_initialized = True
             return
 
-        # 此时说明所有表都存在预计算 embedding，顺序与 self._table_names 一致
+        # 情况3：全部有预计算，直接建索引
         embeddings = precomputed_embeddings
-
         if embeddings.size == 0:
             logger.error("❌ 无法生成嵌入，索引构建失败")
+            self._index_initialized = True
             return
 
-        # 初始化 FAISS 索引（仅在内存中）
         dimension = embeddings.shape[1]
-        self._faiss_index = faiss.IndexFlatIP(dimension)  # 内积 = 余弦相似度
+        self._faiss_index = faiss.IndexFlatIP(dimension)
         self._faiss_index.add(embeddings)
 
         elapsed = time.time() - start_time
@@ -766,7 +927,7 @@ class DatabaseService:
         优先使用在线模型，如果没有配置则使用离线模型。
         """
         if not self._faiss_index:
-            logger.error("❌ 向量索引未初始化")
+            logger.warning("⚠️ 向量索引未初始化（可能无预计算 embedding 且实时计算未执行或失败），跳过向量检索，仅使用 BM25")
             return []
 
         try:
@@ -845,9 +1006,65 @@ class DatabaseService:
         sorted_indices = sorted(scores.items(), key=lambda x: -x[1])
         return [idx for idx, _ in sorted_indices]
 
+    def _get_dashscope_rerank_url_and_payload(
+        self, query: str, documents: List[str]
+    ) -> tuple:
+        """
+        根据模型类型返回 DashScope Rerank 的正确 URL 与请求体。
+        - qwen3-rerank: 使用 /compatible-api/v1/reranks，请求体为扁平结构。
+        - gte-rerank-v2 / qwen3-vl-rerank: 使用 /api/v1/services/rerank/text-rerank/text-rerank，请求体为 input/parameters。
+        """
+        base_url = (self.rerank_base_url or "").strip().rstrip("/")
+        model = (self.rerank_model_name or "").strip().lower()
+        is_dashscope_domain = "dashscope.aliyuncs.com" in base_url or "aliyuncs" in base_url
+        has_rerank_path = "/rerank" in base_url or "/reranks" in base_url
+
+        # 若配置的 base_url 仅为域名或缺少 rerank 路径，则按官方文档补全
+        if is_dashscope_domain and not has_rerank_path:
+            from urllib.parse import urlparse
+            parsed = urlparse(base_url if base_url.startswith("http") else f"https://{base_url}")
+            domain = f"{parsed.scheme or 'https'}://{parsed.netloc}"
+            if "qwen3-rerank" in model:
+                effective_url = f"{domain}/compatible-api/v1/reranks"
+                payload = {
+                    "model": self.rerank_model_name,
+                    "query": query,
+                    "documents": documents,
+                    "top_n": len(documents),
+                    "instruct": "Given a web search query, retrieve relevant passages that answer the query.",
+                }
+            else:
+                effective_url = f"{domain}/api/v1/services/rerank/text-rerank/text-rerank"
+                payload = {
+                    "model": self.rerank_model_name,
+                    "input": {"query": query, "documents": documents},
+                    "parameters": {"top_n": len(documents), "return_documents": False},
+                }
+            return effective_url, payload
+
+        # 使用配置的完整 URL，按模型选择请求体格式
+        if "qwen3-rerank" in model:
+            payload = {
+                "model": self.rerank_model_name,
+                "query": query,
+                "documents": documents,
+                "top_n": len(documents),
+                "instruct": "Given a web search query, retrieve relevant passages that answer the query.",
+            }
+        elif "aliyuncs" in base_url or "qwen" in model or "gte-rerank" in model:
+            payload = {
+                "model": self.rerank_model_name,
+                "input": {"query": query, "documents": documents},
+                "parameters": {"top_n": len(documents), "return_documents": False},
+            }
+        else:
+            payload = {"query": query, "documents": documents}
+        return self.rerank_base_url, payload
+
     def _rerank_with_dashscope(self, query: str, candidate_tables: Dict[str, Dict]) -> List[Tuple[str, float]]:
         """
         使用 DashScope 重排 API 对候选表进行重排序。
+        兼容 qwen3-rerank（/compatible-api/v1/reranks）与 gte-rerank-v2 等（/api/v1/services/rerank/...）。
         """
         if not self.USE_RERANKER:
             logger.debug("⏭️ Reranker 已禁用或配置不完整，跳过重排序")
@@ -866,75 +1083,60 @@ class DatabaseService:
 
             logger.info(f"🔁 调用重排模型 {self.rerank_model_name} 进行重排序...")
 
-            # 根据API类型选择不同的请求结构
-            if "aliyuncs" in self.rerank_base_url or "Qwen" in self.rerank_model_name:
-                # 阿里云 DashScope 格式
-                payload = {
-                    "model": self.rerank_model_name,
-                    "input": {"query": query, "documents": documents},
-                    "parameters": {"top_n": len(documents), "return_documents": False},
-                }
+            # 获取正确的 URL 与请求体（避免 404：DashScope 不同模型路径与 body 不同）
+            if "aliyuncs" in (self.rerank_base_url or "") or (self.rerank_model_name or "").lower().startswith(("qwen", "gte")):
+                effective_url, payload = self._get_dashscope_rerank_url_and_payload(query, documents)
             else:
-                # 其他格式（如本地模型或通用rerank API）
+                effective_url = self.rerank_base_url
                 payload = {"query": query, "documents": documents}
 
-            # 设置请求头
             headers = {"Authorization": f"Bearer {self.rerank_api_key}", "Content-Type": "application/json"}
-
-            # 调用重排 API
-            response = requests.post(self.rerank_base_url, headers=headers, json=payload, timeout=30)
+            response = requests.post(effective_url, headers=headers, json=payload, timeout=15)
 
             # 检查响应状态
             if response.status_code != 200:
                 logger.warning(f"⚠️ Rerank API 调用失败: {response.status_code} - {response.text}")
                 return [(name, 1.0) for name in candidate_tables.keys()]
 
-            # 解析响应
+            # 解析响应（DashScope 两种端点均返回 output.results）
             result_data = response.json()
 
-            # 根据API类型解析响应
-            if "aliyuncs" in self.rerank_base_url or "Qwen" in self.rerank_model_name:
-                # 阿里云格式响应
-                if "output" in result_data and "results" in result_data["output"]:
-                    results = []
-                    for item in result_data["output"]["results"]:
+            if "output" in result_data and "results" in result_data["output"]:
+                results = []
+                for item in result_data["output"]["results"]:
+                    idx = item["index"]
+                    score = item["relevance_score"]
+                    table_name = next(name for name, text in name_to_text.items() if text == documents[idx])
+                    results.append((table_name, score))
+                results.sort(key=lambda x: x[1], reverse=True)
+                logger.info("✅ Rerank 完成")
+                return results
+            # 通用格式（非 DashScope）
+            if "results" in result_data:
+                results = []
+                for item in result_data["results"]:
+                    if "index" in item and "relevance_score" in item:
                         idx = item["index"]
                         score = item["relevance_score"]
+                        if "document" in item and "text" in item["document"]:
+                            doc_text = item["document"]["text"]
+                            table_name = next(name for name, text in name_to_text.items() if text == doc_text)
+                        else:
+                            table_name = next(name for name, text in name_to_text.items() if text == documents[idx])
+                        results.append((table_name, score))
+                results.sort(key=lambda x: x[1], reverse=True)
+                logger.info("✅ Rerank 完成")
+                return results
+            if isinstance(result_data, list):
+                results = []
+                for i, item in enumerate(result_data):
+                    if isinstance(item, dict) and "index" in item:
+                        idx = item["index"]
+                        score = item.get("score", 1.0 - i * 0.01)
                         table_name = next(name for name, text in name_to_text.items() if text == documents[idx])
                         results.append((table_name, score))
-
-                    results.sort(key=lambda x: x[1], reverse=True)
-                    logger.info("✅ Rerank 完成")
-                    return results
-            else:
-                # 通用格式响应 - 假设直接返回排序结果
-                if "results" in result_data:
-                    results = []
-                    for item in result_data["results"]:
-                        if "index" in item and "relevance_score" in item:  # 使用relevance_score
-                            idx = item["index"]
-                            score = item["relevance_score"]  # 使用relevance_score字段
-                            # 从document对象中提取文本
-                            if "document" in item and "text" in item["document"]:
-                                doc_text = item["document"]["text"]
-                                table_name = next(name for name, text in name_to_text.items() if text == doc_text)
-                            else:
-                                table_name = next(name for name, text in name_to_text.items() if text == documents[idx])
-                            results.append((table_name, score))
-                    results.sort(key=lambda x: x[1], reverse=True)
-                    logger.info("✅ Rerank 完成")
-                    return results
-                elif isinstance(result_data, list):
-                    # 假设直接返回了排序后的索引列表
-                    results = []
-                    for i, item in enumerate(result_data):
-                        if isinstance(item, dict) and "index" in item:
-                            idx = item["index"]
-                            score = item.get("score", 1.0 - i * 0.01)  # 默认分数递减
-                            table_name = next(name for name, text in name_to_text.items() if text == documents[idx])
-                            results.append((table_name, score))
-                    logger.info("✅ Rerank 完成")
-                    return results
+                logger.info("✅ Rerank 完成")
+                return results
 
             logger.warning("⚠️ Rerank API 返回格式异常")
             return [(name, 1.0) for name in candidate_tables.keys()]
@@ -1177,42 +1379,46 @@ class DatabaseService:
             # 确保 user_query 也在返回的 state 中（虽然它应该已经在初始 state 中了）
             state["user_query"] = user_query
 
-            # 初始化向量索引
+            # 初始化向量索引（内部会过滤为仅元数据中存在的表，并写入 self._table_names）
             self._initialize_vector_index(all_table_info)
 
-            # 混合检索 - 并行执行 BM25 和向量检索以提高性能
+            # 混合检索仅针对与向量索引一致的表集合，避免 BM25 索引与 self._table_names 不一致导致越界
+            table_info_for_retrieval = {k: all_table_info[k] for k in self._table_names if k in all_table_info}
+            n_tables = len(self._table_names)
+            if n_tables == 0:
+                state["db_info"] = {}
+                return state
+
             logger.info("🔍 开始混合检索：BM25 + 向量检索（并行执行）")
 
-            # 使用线程池并行执行 BM25 和向量检索
             with ThreadPoolExecutor(max_workers=2) as executor:
-                bm25_future = executor.submit(self._retrieve_by_bm25, all_table_info, user_query)
-                vector_future = executor.submit(self._retrieve_by_vector, user_query, 20)
+                bm25_future = executor.submit(self._retrieve_by_bm25, table_info_for_retrieval, user_query)
+                vector_future = executor.submit(self._retrieve_by_vector, user_query, VECTOR_RETRIEVE_TOP_K)
 
-                # 等待两个任务完成
                 bm25_top_indices = bm25_future.result()
                 vector_top_indices = vector_future.result()
 
             logger.info(f"📊 BM25检索返回 {len(bm25_top_indices)} 个结果")
             logger.info(f"🔗 向量检索返回 {len(vector_top_indices)} 个结果")
 
-            # 过滤：仅保留同时在 BM25 前 50 和向量结果中的表
             valid_bm25_set = set(bm25_top_indices[:50])
             candidate_indices = [idx for idx in vector_top_indices if idx in valid_bm25_set]
             logger.info(f"🎯 初步筛选后保留 {len(candidate_indices)} 个候选表")
 
             if not candidate_indices:
-                candidate_indices = bm25_top_indices[:TABLE_RETURN_COUNT]  # 降级
+                candidate_indices = bm25_top_indices[:TABLE_RETURN_COUNT]
                 logger.info(f"⚠️ 候选表为空，降级使用BM25前{TABLE_RETURN_COUNT}个结果")
 
             fused_indices = self._rrf_fusion(bm25_top_indices, candidate_indices, k=60)
             logger.info(f"🔄 RRF融合后得到 {len(fused_indices)} 个结果")
 
-            # 评分筛选
             selected_indices = []
             for idx in fused_indices:
-                bm25_rank = bm25_top_indices.index(idx) + 1 if idx in bm25_top_indices else len(all_table_info) + 1
+                if idx < 0 or idx >= n_tables:
+                    continue
+                bm25_rank = bm25_top_indices.index(idx) + 1 if idx in bm25_top_indices else n_tables + 1
                 vector_rank = (
-                    vector_top_indices.index(idx) + 1 if idx in vector_top_indices else len(all_table_info) + 1
+                    vector_top_indices.index(idx) + 1 if idx in vector_top_indices else n_tables + 1
                 )
                 score = 1 / (60 + bm25_rank) + 1 / (60 + vector_rank)
                 if score >= 0.01 and len(selected_indices) < 10:
@@ -1221,9 +1427,12 @@ class DatabaseService:
             candidate_table_names = [self._table_names[i] for i in selected_indices]
             candidate_table_info = {name: all_table_info[name] for name in candidate_table_names}
 
-            # 重排序
-            reranked_results = self._rerank_with_dashscope(user_query, candidate_table_info)
-            final_table_names = [name for name, _ in reranked_results][:TABLE_RETURN_COUNT]  # 取 top N（可配置）
+            # 候选表较少时跳过 Rerank 以节省约 1–3s
+            if len(candidate_table_info) <= RERANK_SKIP_WHEN_CANDIDATES_LE:
+                reranked_results = [(name, 1.0) for name in candidate_table_names]
+            else:
+                reranked_results = self._rerank_with_dashscope(user_query, candidate_table_info)
+            final_table_names = [name for name, _ in reranked_results][:TABLE_RETURN_COUNT]
 
             # 去重
             final_table_names = list(dict.fromkeys(final_table_names))
@@ -1274,11 +1483,35 @@ class DatabaseService:
         sql_to_execute = state.get("filtered_sql") or state.get("generated_sql", "")
         sql_to_execute = sql_to_execute.strip() if sql_to_execute else ""
 
-        if not sql_to_execute:
-            error_msg = "SQL 为空，无法执行"
+        # 处理未成功生成 SQL 的占位符，避免执行无效语句
+        if not sql_to_execute or sql_to_execute == "No SQL query generated":
+            error_msg = (
+                "SQL 为空，无法执行"
+                if not sql_to_execute
+                else "SQL 未成功生成，已跳过执行"
+            )
             logger.warning(error_msg)
-            state["execution_result"] = ExecutionResult(success=False, error=error_msg)
+            state["execution_result"] = ExecutionResult(
+                success=False,
+                error=error_msg,
+            )
             return state
+
+        # 预览模式行数限制（仅用于页面展示，导出等场景可通过 state['preview_limit_rows']=0 显式关闭）
+        try:
+            from os import getenv as _getenv
+            default_preview_limit = int(_getenv("SQL_EXEC_PREVIEW_LIMIT", "100"))
+        except Exception:
+            default_preview_limit = 100
+        preview_limit = state.get("preview_limit_rows", default_preview_limit)
+
+        sql_for_execution = sql_to_execute
+        if preview_limit and preview_limit > 0 and " limit " not in sql_to_execute.lower():
+            base_sql = sql_to_execute.rstrip(";")
+            sql_for_execution = f"SELECT * FROM ({base_sql}) AS t_preview LIMIT {preview_limit}"
+            logger.info(
+                f"🔎 预览模式：对 SQL 应用 LIMIT {preview_limit} 行（不影响导出等显式关闭预览限制的场景）"
+            )
 
         logger.info("▶️ 执行 SQL 语句")
         # 记录使用的SQL类型（用于调试）
@@ -1299,14 +1532,14 @@ class DatabaseService:
                 logger.info(f"使用原生驱动执行 SQL（数据源类型: {self._datasource_type}）")
                 config = DatasourceConfigUtil.decrypt_config(self._datasource_config)
                 result_data = DatasourceConnectionUtil.execute_query(
-                    self._datasource_type, config, sql_to_execute
+                    self._datasource_type, config, sql_for_execution
                 )
                 state["execution_result"] = ExecutionResult(success=True, data=result_data)
                 logger.info(f"✅ SQL 执行成功（原生驱动），返回 {len(result_data)} 条记录")
             else:
                 # 对于 SQLAlchemy 驱动的数据库，使用 engine 执行
                 with self._engine.connect() as connection:
-                    result = connection.execute(text(sql_to_execute))
+                    result = connection.execute(text(sql_for_execution))
                     result_data = result.fetchall()
                     columns = result.keys()
                     frame = pd.DataFrame(result_data, columns=columns)

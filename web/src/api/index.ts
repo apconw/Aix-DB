@@ -1,6 +1,7 @@
 // import { mockEventStreamText } from '@/data'
 // import { currentHost } from '@/utils/location'
 // import request from '@/utils/request'
+import { useUserStore } from '@/store/business/userStore'
 
 /**
  * Event Stream 调用大模型接口 Ollama3 (Fetch 调用)
@@ -196,6 +197,77 @@ export async function fead_back(chat_id, rating) {
       rating,
     }),
   })
+  return fetch(req)
+}
+
+/**
+ * 导出表格数据为 CSV
+ * @param sql
+ * @param datasource_id
+ * @param filename 不含扩展名，默认为 export
+ */
+export async function export_table_csv(sql: string, datasource_id: number, filename?: string) {
+  const userStore = useUserStore()
+  const token = userStore.getUserToken()
+  const url = new URL(`${location.origin}/sanic/export/table_csv`)
+
+  const req = new Request(url, {
+    mode: 'cors',
+    method: 'post',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`,
+    },
+    body: JSON.stringify({
+      sql,
+      datasource_id,
+      filename,
+    }),
+  })
+
+  const res = await fetch(req)
+  if (!res.ok) {
+    throw new Error(`导出失败，状态码：${res.status}`)
+  }
+
+  const blob = await res.blob()
+  const objectUrl = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = objectUrl
+  a.download = `${(filename || 'export').trim() || 'export'}.csv`
+  document.body.appendChild(a)
+  a.click()
+  document.body.removeChild(a)
+  URL.revokeObjectURL(objectUrl)
+}
+
+/**
+ * 表格分页查询（基于 SQL）
+ * @param sql
+ * @param datasource_id
+ * @param page
+ * @param size
+ */
+export async function table_page(sql: string, datasource_id: number, page = 1, size = 20) {
+  const userStore = useUserStore()
+  const token = userStore.getUserToken()
+  const url = new URL(`${location.origin}/sanic/export/table_page`)
+
+  const req = new Request(url, {
+    mode: 'cors',
+    method: 'post',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`,
+    },
+    body: JSON.stringify({
+      sql,
+      datasource_id,
+      page,
+      size,
+    }),
+  })
+
   return fetch(req)
 }
 
