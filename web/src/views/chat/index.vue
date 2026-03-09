@@ -1689,7 +1689,7 @@ const handleHistoryClick = async (item: any) => {
               @click="showDefaultPage = true"
             >
               <div class="i-hugeicons:ai-chat-02 text-32 c-[#3B5CFF]"></div>
-              <span class="text-24 font-bold text-[#111111] tracking-tight font-sans">南天智能助手</span>
+              <span class="text-24 font-bold text-[#111111] tracking-tight font-sans">智能助手</span>
             </div>
             <div class="header-actions flex items-center gap-5">
               <div
