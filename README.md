@@ -1,3 +1,5 @@
+[![MseeP.ai Security Assessment Badge](https://mseep.net/pr/apconw-aix-db-badge.png)](https://mseep.ai/app/apconw-aix-db)
+
 <p align="center">
   <a href="https://github.com/apconw/Aix-DB">
     <img src="./docs/docs/images/logo.svg" alt="Aix-DB" width="160"/>
