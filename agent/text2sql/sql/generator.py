@@ -149,7 +149,7 @@ def sql_generate(state: AgentState) -> AgentState:
             data_training = ""
         
         custom_prompt = ""  # 自定义提示词（暂时为空）
-        error_msg = ""  # 错误消息（暂时为空）
+        error_msg = state.get("error_msg", "")  # 从上次执行失败中获取，供 LLM 自纠错
         
         # 获取系统提示词和用户提示词
         system_prompt, user_prompt = prompt_builder.build_sql_prompt(
@@ -267,6 +267,8 @@ def sql_generate(state: AgentState) -> AgentState:
             
             chart_type = result.get("chart-type", result.get("chart_type", "table"))
             state["chart_type"] = chart_type
+            # 成功后清除 error_msg，避免污染后续步骤
+            state["error_msg"] = ""
             
             # 保存使用的表名（如果模板返回了 tables 字段）
             if "tables" in result:

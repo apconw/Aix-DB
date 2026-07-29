@@ -16,6 +16,7 @@ from agent.text2sql.permission.filter_injector import permission_filter_injector
 from agent.text2sql.chart.generator import chart_generator
 from agent.text2sql.datasource.selector import datasource_selector
 from agent.text2sql.state.agent_state import AgentState
+from agent.text2sql.database.sql_error import MAX_SQL_ATTEMPTS, SqlErrorType
 
 logger = logging.getLogger(__name__)
 
@@ -39,6 +40,57 @@ def should_continue_after_datasource_selector(state: AgentState) -> str:
         logger.warning("数据源选择失败，进入异常处理节点")
         return "error_handler"
     return "schema_inspector"
+
+
+def should_retry_sql(state: AgentState) -> str:
+    """
+    sql_executor 之后的条件判断（SQL 自纠错循环）：
+    - 执行成功 → parallel_collector
+    - 执行失败+不可重试 → error_handler（快速失败）
+    - 执行失败+可重试+未达上限 → sql_generator（重试）
+    - 执行失败+可重试+已达上限 → error_handler（耗尽重试）
+    """
+    result = state.get("execution_result")
+    attempts = state.get("attempts", 0)
+
+    if result and result.success:
+        state["correct_attempts"] = state.get("correct_attempts", 0) + 1
+        logger.info(
+            "SQL 执行成功（ attempts=%s, correct_attempts=%s ）",
+            attempts,
+            state["correct_attempts"],
+        )
+        return "parallel_collector"
+
+    is_retryable = state.get("is_retryable_error", False)
+    last_error = state.get("last_error_type", "unknown")
+
+    if not is_retryable:
+        logger.warning(
+            "SQL 执行失败（错误类型: %s），不可重试，进入错误处理",
+            last_error,
+        )
+        return "error_handler"
+
+    if attempts >= MAX_SQL_ATTEMPTS:
+        state["error_message"] = (
+            f"SQL 执行失败，已尝试 {MAX_SQL_ATTEMPTS} 次仍未能成功生成可执行的 SQL，"
+            "请换个问题或联系管理员。"
+        )
+        logger.warning(
+            "SQL 执行失败，已达到最大尝试次数 %s，进入错误处理",
+            MAX_SQL_ATTEMPTS,
+        )
+        return "error_handler"
+
+    state["attempts"] = attempts + 1
+    logger.info(
+        "SQL 执行失败（错误类型: %s），正在重新生成（第 %s/%s 次尝试）",
+        last_error,
+        state["attempts"],
+        MAX_SQL_ATTEMPTS,
+    )
+    return "sql_generator"
 
 
 def handle_datasource_error(state: AgentState) -> AgentState:
@@ -100,8 +152,16 @@ def create_graph(datasource_id: int = None):
     graph.add_edge("early_recommender", "sql_generator")
     graph.add_edge("sql_generator", "permission_filter")
     graph.add_edge("permission_filter", "sql_executor")
-    # 优化：并行执行 chart_generator 和 summarize（推荐问题已在后台执行）
-    graph.add_edge("sql_executor", "parallel_collector")
+    # SQL 自纠错循环：sql_executor 之后根据执行结果路由
+    graph.add_conditional_edges(
+        "sql_executor",
+        should_retry_sql,
+        {
+            "parallel_collector": "parallel_collector",
+            "sql_generator": "sql_generator",  # 重试回到 SQL 生成
+            "error_handler": "error_handler",
+        },
+    )
     # 统一收集：按顺序收集 summarize → 图表数据 → 推荐问题
     graph.add_edge("parallel_collector", "unified_collector")
     graph.add_edge("unified_collector", END)

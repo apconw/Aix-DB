@@ -4,6 +4,11 @@ from sqlalchemy import create_engine
 
 from common.datasource_util import DatasourceConfigUtil, DatasourceConnectionUtil, DB, ConnectType
 from model import Datasource
+from agent.text2sql.database.sql_error import (
+    classify_sql_error,
+    SqlErrorType,
+    is_retryable_error,
+)
 
 warnings.filterwarnings("ignore", message=".*pkg_resources.*deprecated.*")
 
@@ -1279,6 +1284,9 @@ class DatabaseService:
             error_msg = "SQL 为空，无法执行"
             logger.warning(error_msg)
             state["execution_result"] = ExecutionResult(success=False, error=error_msg)
+            state["error_msg"] = error_msg
+            state["is_retryable_error"] = False
+            state["last_error_type"] = SqlErrorType.EMPTY_SQL.value
             return state
 
         is_allowed, security_error = validate_read_only_sql(
@@ -1292,6 +1300,9 @@ class DatabaseService:
                 success=False,
                 error=security_error,
             )
+            state["error_msg"] = security_error
+            state["is_retryable_error"] = False
+            state["last_error_type"] = SqlErrorType.SECURITY_VIOLATION.value
             return state
 
         logger.info("▶️ 执行 SQL 语句")
@@ -1327,7 +1338,17 @@ class DatabaseService:
                     state["execution_result"] = ExecutionResult(success=True, data=frame.to_dict(orient="records"))
                     logger.info(f"✅ SQL 执行成功，返回 {len(result_data)} 条记录")
         except Exception as e:
-            error_msg = f"执行 SQL 失败: {e}"
-            logger.error(error_msg, exc_info=True)
-            state["execution_result"] = ExecutionResult(success=False, error=str(e))
+            error_type, detailed_error = classify_sql_error(e)
+            retryable = is_retryable_error(error_type)
+            logger.error(
+                "SQL 执行失败: type=%s, retryable=%s, error=%s",
+                error_type.value,
+                retryable,
+                detailed_error,
+                exc_info=True,
+            )
+            state["execution_result"] = ExecutionResult(success=False, error=detailed_error)
+            state["error_msg"] = detailed_error
+            state["is_retryable_error"] = retryable
+            state["last_error_type"] = error_type.value
         return state

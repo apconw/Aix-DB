@@ -269,6 +269,18 @@ class Text2SqlAgent:
             response, current_step, langgraph_step, t02_answer_data
         )
 
+        # 检测 SQL 重试尝试，推送进度消息
+        if langgraph_step == "sql_generator" and step_value:
+            attempts = step_value.get("attempts", 0)
+            if attempts > 1:
+                retry_msg = f"正在重新生成 SQL（第 {attempts}/3 次尝试）..."
+                await self._send_response(
+                    response,
+                    retry_msg,
+                    message_type="continue",
+                    data_type=DataTypeEnum.ANSWER.value[0],
+                )
+
         # 处理具体步骤内容
         if step_value:
             await self._process_step_content(

@@ -36,3 +36,7 @@ class AgentState(TypedDict):
     used_tables: Optional[List[str]]  # SQL 使用的表名列表
     bm25_tokens: Optional[List[str]]  # BM25 对用户问题的分词结果
     error_message: Optional[str]  # 异常信息（如数据源选择失败时的提示）
+    # ── SQL 自纠错循环新增字段 ──────────────────────────────────────
+    error_msg: Optional[str] = ""  # 最近一次 SQL 执行错误（传给 LLM 用于自纠错）
+    is_retryable_error: bool = False  # 该错误是否可重试
+    last_error_type: Optional[str] = None  # SqlErrorType.value 字符串，供路由判断
