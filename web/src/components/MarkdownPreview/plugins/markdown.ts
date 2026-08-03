@@ -1,3 +1,4 @@
+import DOMPurify from 'dompurify'
 import MarkdownIt from 'markdown-it'
 import hljs from './highlight'
 import { preWrapperPlugin } from './preWrapper'
@@ -49,5 +50,10 @@ md.renderer.rules.image = function (tokens, idx, options, env, self) {
 md.use(preWrapperPlugin, {
   hasSingleTheme: true,
 })
+
+const originalRender = md.render.bind(md)
+md.render = (src: string, env?: any) => {
+  return DOMPurify.sanitize(originalRender(src, env))
+}
 
 export default md
