@@ -69,6 +69,19 @@ Aix-DB 基于 **LangChain/LangGraph** 框架，结合 **MCP Skills** 多智能�
 |-------------------------------------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------|
 | <a href="https://doloffer.com/" target="_blank"><img src="./docs/docs/images/doloffers.png" alt="doloffer" width="320" /></a> | <a href="https://app.ipdatacloud.com/check_login/set_cookie_ip66?target_url=https://www.ipdatacloud.com/?utm-source=SQ&utm-keyword=?4897&name=spread_id&value=4897" target="_blank"><img src="./docs/docs/images/ip_hub.jpg" alt="IP数据云" width="320" /></a> |
 
+<table>
+  <tr>
+    <td width="180" align="center">
+      <a href="https://go.apimart.ai/gh-aix-db" target="_blank">
+        <img src="./docs/docs/images/apimart.png" alt="APIMart" width="160" />
+      </a>
+    </td>
+    <td>
+      感谢 APIMart 赞助了本项目！APIMart 是专注 AI 图片/视频生成的低价 API 平台，GPT-Image-2 低至 $0.006/张，1 美元可出图 160+ 张。图片、视频一套异步 API 通吃，提交任务拿 ID、回调取结果，跑批万张不超时、换模型不改代码。按量付费、无月费，通过此<a href="https://go.apimart.ai/gh-aix-db" target="_blank">注册链接</a>注册即可开用。
+    </td>
+  </tr>
+</table>
+
 
 ## 系统架构
 
