@@ -36,3 +36,7 @@ class AgentState(TypedDict):
     used_tables: Optional[List[str]]  # SQL 使用的表名列表
     bm25_tokens: Optional[List[str]]  # BM25 对用户问题的分词结果
     error_message: Optional[str]  # 异常信息（如数据源选择失败时的提示）
+    _early_recommender_future: Optional[Any]  # 请求级后台推荐任务，避免模块级引用泄漏
+    error_msg: Optional[str]  # 最近一次 SQL 执行错误，供重试生成使用
+    is_retryable_error: bool  # 最近一次 SQL 错误是否可由重新生成修正
+    last_error_type: Optional[str]  # 最近一次 SQL 错误分类

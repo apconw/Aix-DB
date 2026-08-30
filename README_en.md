@@ -37,13 +37,11 @@
 </p>
 
 <p align="center">
-  <b>👇 Click to Experience Now 👇</b>
+  <b>👇 Run Aix-DB locally 👇</b>
 </p>
 
 <p align="center">
-  <a href="YOUR_CHAT_URL"><img src="https://img.shields.io/badge/💬_AI_Chat-4A90D9?style=for-the-badge" alt="AI Chat" /></a>
-  <a href="YOUR_DATA_URL"><img src="https://img.shields.io/badge/📊_Data_Q&A-10B981?style=for-the-badge" alt="Data Q&A" /></a>
-  <a href="http://www.aixhub.top:5006"><img src="https://img.shields.io/badge/📈_Report_Gen-F59E0B?style=for-the-badge" alt="Report Generation" /></a>
+  <a href="#quick-start"><img src="https://img.shields.io/badge/🚀_Quick_Start-4A90D9?style=for-the-badge" alt="Quick Start" /></a>
 </p>
 
 <p align="center">

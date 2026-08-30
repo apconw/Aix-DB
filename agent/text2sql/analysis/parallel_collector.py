@@ -52,9 +52,16 @@ def parallel_collect(state: AgentState, tasks: list[str] = None) -> AgentState:
     logger.info(f"🔄 开始并行执行任务: {tasks}")
 
     # 创建状态的深拷贝，确保并行任务不会互相影响
+    # concurrent.futures.Future 内含线程锁，不能 deepcopy；后台推荐 Future
+    # 只用于统一收集节点，不应传给图表或总结任务。
+    copy_source = {
+        key: value
+        for key, value in state.items()
+        if key != "_early_recommender_future"
+    }
     state_copies = {}
     for task in tasks:
-        state_copies[task] = deepcopy(state)
+        state_copies[task] = deepcopy(copy_source)
 
     # 定义任务函数映射
     task_functions = {
@@ -141,9 +148,9 @@ def parallel_collect_after_sql_executor(state: AgentState) -> AgentState:
         更新后的 state
     """
     # 检查是否已经有早期启动的推荐问题生成任务
-    early_task_id = state.get("_early_recommender_task_id")
+    early_future = state.get("_early_recommender_future")
 
-    if early_task_id:
+    if early_future:
         # 如果有早期启动的任务，只并行执行 chart_generator 和 summarize
         # question_recommender 会在后续节点中等待并合并
         logger.info("🔄 并行执行 chart_generator 和 summarize（推荐问题已在后台执行）")
@@ -174,9 +181,10 @@ def wait_and_merge_early_recommender(state: AgentState) -> AgentState:
         wait_for_early_recommender,
     )
 
-    task_id = state.get("_early_recommender_task_id")
+    future = state.get("_early_recommender_future")
+    state["_early_recommender_future"] = None
 
-    if not task_id:
+    if not future:
         logger.debug("没有早期启动的推荐问题任务")
         # 如果 state 中已有推荐问题，直接使用
         if "recommended_questions" in state and state.get("recommended_questions"):
@@ -194,7 +202,7 @@ def wait_and_merge_early_recommender(state: AgentState) -> AgentState:
         return state
 
     # 等待早期任务完成
-    recommended_questions = wait_for_early_recommender(task_id, timeout=5)
+    recommended_questions = wait_for_early_recommender(future, timeout=5)
 
     if recommended_questions is not None:
         state["recommended_questions"] = recommended_questions

@@ -4,6 +4,11 @@ from sqlalchemy import create_engine
 
 from common.datasource_util import DatasourceConfigUtil, DatasourceConnectionUtil, DB, ConnectType
 from model import Datasource
+from agent.text2sql.database.sql_error import (
+    SqlErrorType,
+    classify_sql_error,
+    is_retryable_error,
+)
 
 warnings.filterwarnings("ignore", message=".*pkg_resources.*deprecated.*")
 
@@ -1271,6 +1276,10 @@ class DatabaseService:
         优先使用权限过滤后的SQL（filtered_sql），如果没有则使用原始生成的SQL（generated_sql）。
         支持 SQLAlchemy 驱动和原生驱动两种执行方式。
         """
+        # attempts 表示总执行次数（包含首次），必须在执行节点内更新，
+        # 条件路由中的状态修改不会被 LangGraph 持久化。
+        state["attempts"] = state.get("attempts", 0) + 1
+
         # 优先使用权限过滤后的SQL，如果没有则使用原始生成的SQL
         sql_to_execute = state.get("filtered_sql") or state.get("generated_sql", "")
         sql_to_execute = sql_to_execute.strip() if sql_to_execute else ""
@@ -1279,6 +1288,9 @@ class DatabaseService:
             error_msg = "SQL 为空，无法执行"
             logger.warning(error_msg)
             state["execution_result"] = ExecutionResult(success=False, error=error_msg)
+            state["error_msg"] = error_msg
+            state["is_retryable_error"] = False
+            state["last_error_type"] = SqlErrorType.EMPTY_SQL.value
             return state
 
         is_allowed, security_error = validate_read_only_sql(
@@ -1292,6 +1304,9 @@ class DatabaseService:
                 success=False,
                 error=security_error,
             )
+            state["error_msg"] = security_error
+            state["is_retryable_error"] = False
+            state["last_error_type"] = SqlErrorType.SECURITY_VIOLATION.value
             return state
 
         logger.info("▶️ 执行 SQL 语句")
@@ -1316,6 +1331,7 @@ class DatabaseService:
                     self._datasource_type, config, sql_to_execute
                 )
                 state["execution_result"] = ExecutionResult(success=True, data=result_data)
+                state["correct_attempts"] = state.get("correct_attempts", 0) + 1
                 logger.info(f"✅ SQL 执行成功（原生驱动），返回 {len(result_data)} 条记录")
             else:
                 # 对于 SQLAlchemy 驱动的数据库，使用 engine 执行
@@ -1325,9 +1341,20 @@ class DatabaseService:
                     columns = result.keys()
                     frame = pd.DataFrame(result_data, columns=columns)
                     state["execution_result"] = ExecutionResult(success=True, data=frame.to_dict(orient="records"))
+                    state["correct_attempts"] = state.get("correct_attempts", 0) + 1
                     logger.info(f"✅ SQL 执行成功，返回 {len(result_data)} 条记录")
         except Exception as e:
-            error_msg = f"执行 SQL 失败: {e}"
-            logger.error(error_msg, exc_info=True)
-            state["execution_result"] = ExecutionResult(success=False, error=str(e))
+            error_type, error_msg = classify_sql_error(e)
+            retryable = is_retryable_error(error_type)
+            logger.error(
+                "执行 SQL 失败: type=%s, retryable=%s, error=%s",
+                error_type.value,
+                retryable,
+                error_msg,
+                exc_info=True,
+            )
+            state["execution_result"] = ExecutionResult(success=False, error=error_msg)
+            state["error_msg"] = error_msg
+            state["is_retryable_error"] = retryable
+            state["last_error_type"] = error_type.value
         return state

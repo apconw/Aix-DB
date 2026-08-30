@@ -1,5 +1,6 @@
 <script setup>
-import { marked } from 'marked' // 引入 marked 库
+import DOMPurify from 'dompurify'
+import { marked } from 'marked'
 import { NLayout, NLayoutContent, NLayoutHeader } from 'naive-ui'
 import * as GlobalAPI from '@/api'
 
@@ -271,7 +272,7 @@ function navigateToDetail(id) {
       <p
         v-for="(message, index) in messages"
         :key="index"
-        v-html="marked(message)"
+        v-html="DOMPurify.sanitize(marked(message))"
       ></p>
     </div>
     <div

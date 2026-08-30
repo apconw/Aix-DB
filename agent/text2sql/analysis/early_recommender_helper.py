@@ -5,7 +5,7 @@
 import logging
 import threading
 from typing import Optional, List
-from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import Future, ThreadPoolExecutor, TimeoutError as FutureTimeoutError
 
 from agent.text2sql.state.agent_state import AgentState
 from agent.text2sql.question.recommender import question_recommender
@@ -13,10 +13,9 @@ from copy import deepcopy
 
 logger = logging.getLogger(__name__)
 
-# 全局线程池和任务字典
+# 全局线程池。Future 本身保存在请求状态中，避免失败请求在模块级字典中永久残留。
 _recommender_executor: Optional[ThreadPoolExecutor] = None
 _recommender_lock = threading.Lock()
-_recommender_futures: dict = {}  # {task_id: {'future': future, 'result': [], 'completed': False}}
 
 
 def get_recommender_executor() -> ThreadPoolExecutor:
@@ -50,114 +49,61 @@ def start_early_recommender(state: AgentState) -> AgentState:
             logger.debug("推荐问题生成所需数据不完整，跳过早期启动")
             return state
         
-        # 创建任务ID用于跟踪
-        task_id = f"{datasource_id}_{id(state)}"
-        
         logger.info("🚀 早期启动推荐问题生成（后台并行执行）")
-        
-        # 在线程池中异步执行推荐问题生成
+
+        # 在线程池中异步执行推荐问题生成。在线程启动前复制状态，避免闭包
+        # 捕获随后被 LangGraph 持续修改的请求对象。
         executor = get_recommender_executor()
-        
-        def run_recommender():
+        state_copy = deepcopy(state)
+
+        def run_recommender() -> List[str]:
             """在线程中运行 question_recommender"""
             try:
-                state_copy = deepcopy(state)
                 result_state = question_recommender(state_copy)
                 recommended_questions = result_state.get("recommended_questions", [])
-                
-                with _recommender_lock:
-                    if task_id in _recommender_futures:
-                        _recommender_futures[task_id]['completed'] = True
-                        _recommender_futures[task_id]['result'] = recommended_questions
-                
-                logger.info(f"✅ 早期推荐问题生成完成，任务ID: {task_id}，生成 {len(recommended_questions)} 个问题")
+                logger.info(
+                    "✅ 早期推荐问题生成完成，生成 %s 个问题",
+                    len(recommended_questions),
+                )
+                return recommended_questions
             except Exception as e:
                 logger.error(f"❌ 早期推荐问题生成失败: {e}", exc_info=True)
-                with _recommender_lock:
-                    if task_id in _recommender_futures:
-                        _recommender_futures[task_id]['completed'] = True
-                        _recommender_futures[task_id]['result'] = []
-                        _recommender_futures[task_id]['error'] = str(e)
-        
-        future = executor.submit(run_recommender)
-        
-        with _recommender_lock:
-            _recommender_futures[task_id] = {
-                'future': future,
-                'result': [],
-                'completed': False,
-                'error': None
-            }
-        
-        # 在 state 中保存 task_id
-        state["_early_recommender_task_id"] = task_id
+                return []
+
+        # Future 的生命周期与当前 LangGraph 请求状态绑定。若下游节点异常，
+        # 请求状态释放后 Future 也会在任务完成时被线程池正常释放。
+        state["_early_recommender_future"] = executor.submit(run_recommender)
         
     except Exception as e:
         logger.error(f"❌ 早期启动推荐问题生成失败: {e}", exc_info=True)
-        if "_early_recommender_task_id" not in state:
-            state["_early_recommender_task_id"] = None
+        state["_early_recommender_future"] = None
     
     return state
 
 
-def wait_for_early_recommender(task_id: str, timeout: int = 5) -> Optional[List[str]]:
+def wait_for_early_recommender(
+    future: Optional[Future], timeout: int = 5
+) -> Optional[List[str]]:
     """
     等待早期推荐问题生成任务完成
     
     Args:
-        task_id: 任务ID
+        future: 当前请求状态中的后台任务
         timeout: 超时时间（秒）
         
     Returns:
         推荐问题列表，如果超时或失败则返回 None
     """
+    if future is None:
+        return None
+
     try:
-        with _recommender_lock:
-            if task_id not in _recommender_futures:
-                logger.warning(f"未找到任务ID {task_id} 的状态")
-                return None
-            
-            task_info = _recommender_futures[task_id].copy()
-        
-        # 如果任务已完成，直接返回结果
-        if task_info.get('completed'):
-            result = task_info.get('result', [])
-            # 清理任务信息
-            with _recommender_lock:
-                try:
-                    del _recommender_futures[task_id]
-                except KeyError:
-                    pass
-            return result if result else None
-        
-        # 如果任务未完成，等待完成
-        future = task_info.get('future')
-        if future:
-            try:
-                future.result(timeout=timeout)
-                # 重新获取结果
-                with _recommender_lock:
-                    if task_id in _recommender_futures:
-                        task_info = _recommender_futures[task_id]
-                        result = task_info.get('result', [])
-                        # 清理任务信息
-                        try:
-                            del _recommender_futures[task_id]
-                        except KeyError:
-                            pass
-                        return result if result else None
-            except Exception as e:
-                logger.warning(f"等待推荐问题生成失败: {e}")
-                # 清理任务信息
-                with _recommender_lock:
-                    try:
-                        del _recommender_futures[task_id]
-                    except KeyError:
-                        pass
-                return None
-        
+        result = future.result(timeout=timeout)
+        return result if result else None
+    except FutureTimeoutError:
+        logger.warning("等待推荐问题生成超时")
+        future.cancel()
     except Exception as e:
         logger.error(f"等待推荐问题生成异常: {e}", exc_info=True)
-    
-    return None
 
+    return None
