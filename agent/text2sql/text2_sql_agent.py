@@ -9,6 +9,7 @@ from typing import Any, Dict, Optional, Union
 from langgraph.graph.state import CompiledStateGraph
 
 from agent.text2sql.analysis.graph import create_graph
+from agent.text2sql.database.sql_error import MAX_SQL_ATTEMPTS
 from agent.text2sql.state.agent_state import AgentState
 from constants.code_enum import DataTypeEnum, IntentEnum
 from services.user_service import add_user_record, decode_jwt_token
@@ -33,6 +34,7 @@ STEP_NAME_MAP = {
     "question_recommender": "推荐问题...",
     "datasource_selector": "数据源选择...",
     "error_handler": "错误处理",
+    "sql_error_handler": "SQL错误处理",
 }
 
 
@@ -269,6 +271,20 @@ class Text2SqlAgent:
             response, current_step, langgraph_step, t02_answer_data
         )
 
+        if langgraph_step == "sql_generator" and step_value:
+            completed_attempts = step_value.get("attempts", 0)
+            if completed_attempts:
+                retry_msg = (
+                    "正在重新生成 SQL"
+                    f"（第 {completed_attempts + 1}/{MAX_SQL_ATTEMPTS} 次尝试）..."
+                )
+                await self._send_response(
+                    response,
+                    retry_msg,
+                    message_type="continue",
+                    data_type=DataTypeEnum.ANSWER.value[0],
+                )
+
         # 处理具体步骤内容
         if step_value:
             await self._process_step_content(
@@ -347,6 +363,10 @@ class Text2SqlAgent:
                 "error_message",
                 "当前没有可用的数据源，请联系管理员。",
             ),
+            "sql_error_handler": lambda: step_value.get(
+                "error_message",
+                "SQL 执行失败，请稍后重试。",
+            ),
             "schema_inspector": lambda: self._format_db_info_with_bm25(step_value),
             "table_relationship": lambda: json.dumps(
                 step_value["table_relationship"], ensure_ascii=False
@@ -384,7 +404,11 @@ class Text2SqlAgent:
 
             # unified_collector 节点由专门的 _process_unified_collector 处理，不在这里发送格式化消息
             # 只发送关键步骤的内容到前端：error_handler（错误信息）、summarize（总结）
-            should_send = step_name in ["error_handler", "summarize"]
+            should_send = step_name in [
+                "error_handler",
+                "sql_error_handler",
+                "summarize",
+            ]
 
             if should_send:
                 await self._send_response(

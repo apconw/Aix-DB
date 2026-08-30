@@ -33,6 +33,13 @@ def sql_generate(state: AgentState) -> AgentState:
     Returns:
         更新后的 state
     """
+    # 每一轮都必须重新生成权限过滤 SQL；否则生成失败时 execute_sql 会
+    # 继续执行上一轮遗留的 filtered_sql。
+    state["filtered_sql"] = None
+    # tables 字段可能不会出现在每次 LLM 响应中。清空上一轮缓存后，
+    # permission_filter 会从本轮 SQL 重新解析表名，避免复用错误权限范围。
+    state["used_tables"] = None
+
     try:
         # 获取数据库信息
         db_info = state.get("db_info", {})
@@ -149,7 +156,7 @@ def sql_generate(state: AgentState) -> AgentState:
             data_training = ""
         
         custom_prompt = ""  # 自定义提示词（暂时为空）
-        error_msg = ""  # 错误消息（暂时为空）
+        error_msg = state.get("error_msg", "")
         
         # 获取系统提示词和用户提示词
         system_prompt, user_prompt = prompt_builder.build_sql_prompt(
@@ -267,6 +274,7 @@ def sql_generate(state: AgentState) -> AgentState:
             
             chart_type = result.get("chart-type", result.get("chart_type", "table"))
             state["chart_type"] = chart_type
+            state["error_msg"] = ""
             
             # 保存使用的表名（如果模板返回了 tables 字段）
             if "tables" in result:

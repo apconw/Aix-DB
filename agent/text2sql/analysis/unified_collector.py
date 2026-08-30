@@ -58,7 +58,7 @@ async def unified_collect(state: AgentState) -> AgentState:
     
     # 3. 等待并合并推荐问题（如果早期任务存在）
     try:
-        if "_early_recommender_task_id" in state and state.get("_early_recommender_task_id"):
+        if state.get("_early_recommender_future"):
             logger.info("📋 等待并合并推荐问题...")
             state = wait_and_merge_early_recommender(state)
             logger.info("✅ 推荐问题合并完成")
@@ -73,4 +73,3 @@ async def unified_collect(state: AgentState) -> AgentState:
     
     logger.info("✅ 统一收集完成")
     return state
-
