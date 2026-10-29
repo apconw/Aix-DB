@@ -45,8 +45,13 @@ Aix-DB Pro 面向企业业务分析场景，将自然语言问数、图表分析
 
 <table align="center">
   <tr>
-    <td align="center" width="220">
-      <img src="./docs/docs/images/wechat.jpg" alt="商务合作与 POC 体验：个人微信二维码" width="180" />
+    <td align="center" width="200">
+      <img src="./docs/docs/images/wechat.jpg" alt="商务合作与 POC 体验：个人微信二维码" width="180" /><br />
+      <sub><b>个人微信</b></sub>
+    </td>
+    <td align="center" width="200">
+      <img src="./docs/docs/images/qrcode.jpg" alt="微信公众号二维码" width="180" /><br />
+      <sub><b>微信公众号</b></sub>
     </td>
     <td valign="middle">
       <b>商务合作 &amp; 体验 POC，请添加我的微信</b><br /><br />
