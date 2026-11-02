@@ -32,11 +32,14 @@ Aix-DB 基于 **LangChain/LangGraph** 框架，结合 **MCP Skills** 多智能�
 **产品特点**：📦 开箱即用 · 🔒 安全可控 · 🔌 易于集成 · 🎯 越问越准 · 🧩 Skill 模式 · 🐾 OpenClaw 智能集成
 
 
-## Aix-DB Pro 商业版
+## Aix-DB Pro
 
 **让数据分析从一句提问开始，让业务洞察沉淀为报告与看板。**
 
 Aix-DB Pro 面向企业业务分析场景，将自然语言问数、图表分析、报告中心与数据看板融于一体。从日常数据查询到经营指标追踪，用对话探索数据，让分析成果持续复用。
+
+- [本地部署 docker-compose.yaml](./docs/docker-compose.yaml?raw=1)
+- [帮助文档](https://ucnr3jmj44ym.feishu.cn/wiki/VHUWwbsCEimDEwkoUeQcNYGWn1e?fromScene=spaceOverview)
 
 - **对话式数据分析**：用自然语言提问，结合明细表格与可视化图表查看结果、继续追问。
 - **智能数据看板**：集中呈现核心指标、同比环比与趋势，通过对话补充和调整图表。
@@ -46,7 +49,7 @@ Aix-DB Pro 面向企业业务分析场景，将自然语言问数、图表分析
 <table align="center">
   <tr>
     <td align="center" width="200">
-      <img src="./docs/docs/images/wechat.jpg" alt="商务合作与 POC 体验：个人微信二维码" width="180" /><br />
+      <img src="./docs/docs/images/wechat.jpg" alt="交流学习：个人微信二维码" width="180" /><br />
       <sub><b>个人微信</b></sub>
     </td>
     <td align="center" width="200">
@@ -54,15 +57,15 @@ Aix-DB Pro 面向企业业务分析场景，将自然语言问数、图表分析
       <sub><b>微信公众号</b></sub>
     </td>
     <td valign="middle">
-      <b>商务合作 &amp; 体验 POC，请添加我的微信</b><br /><br />
+      <b>交流学习，欢迎添加我的微信</b><br /><br />
       微信号：<b>weber812</b><br />
-      添加时请备注：<b>商务合作 / POC 体验</b><br /><br />
-      欢迎交流企业数据分析需求、预约商业版演示，探讨业务场景验证与落地方案。
+      添加时请备注：<b>技术支持</b><br /><br />
+      欢迎交流大模型应用、企业数据分析等相关话题，期待与同行及感兴趣的朋友互相学习、分享经验。
     </td>
   </tr>
 </table>
 
-### 商业版支持的数据库
+### Pro版支持的数据库
 
 <p align="center">
   <img src="https://img.shields.io/badge/MySQL-4479A1?style=for-the-badge&logo=mysql&logoColor=white" alt="MySQL" />
@@ -111,7 +114,7 @@ Aix-DB Pro 面向企业业务分析场景，将自然语言问数、图表分析
   <img src="https://img.shields.io/badge/MaxCompute-FF6A00?style=for-the-badge&logoColor=white" alt="MaxCompute" />
 </p>
 
-### 商业版产品预览
+### Pro版产品预览
 
 <p align="center">
   <a href="./docs/docs/images/commercial/home.png"><img src="./docs/docs/images/commercial/home.png" alt="Aix-DB Pro 首页：普通模式与报告模式，自然语言发起数据分析" width="100%" /></a>
@@ -148,7 +151,7 @@ Aix-DB Pro 面向企业业务分析场景，将自然语言问数、图表分析
   </p>
 </details>
 
-<p align="center"><sub>以上为商业版界面展示，点击图片可查看原图。</sub></p>
+<p align="center"><sub>以上为Pro版界面展示，点击图片可查看原图。</sub></p>
 
 ## 演示视频
 

@@ -1,0 +1,113 @@
+services:
+  aix-db-pro:
+    image: crpi-7xkxsdc0iki61l0q.cn-hangzhou.personal.cr.aliyuncs.com/apconw/aix-db-pro:latest
+    container_name: aix-db
+    privileged: true
+    restart: unless-stopped
+    environment:
+      # 沙箱地址
+      AIX_DB_SANDBOX_URL: http://sandbox:5300
+      # 时区
+      TZ: Asia/Shanghai
+      SERVER_PORT: "8088"
+      # 工作 worker 进程数
+      SERVER_WORKERS: "4"
+      # Redis 配置
+      REDIS_URL: redis://redis:6379/0
+      DATASOURCE_SYNC_TIMEOUT_SECONDS: ${DATASOURCE_SYNC_TIMEOUT_SECONDS:-7200}
+      # 数据库配置
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      POSTGRES_USER: aix_db
+      POSTGRES_PASSWORD: aixDb@2026
+      POSTGRES_DB: aix_db
+    depends_on:
+      sandbox:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    ports:
+      # 前端（通过 nginx）
+      - "18080:80"
+      # 后端 API
+      - "18088:8088"
+    volumes:
+      - ./volume/app_data:/data
+      - ./volume/logs/supervisor:/var/log/supervisor
+      - ./volume/logs/nginx:/var/log/nginx
+      - ./volume/logs/aix-db:/var/log/aix-db
+      - /sys/devices/virtual:/host/sys/class:ro
+      - ${HOST_MACHINE_ID_PATH:-/etc/machine-id}:/host/etc/machine-id:ro
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+    healthcheck:
+      test: [ "CMD", "/aix-db/.venv/bin/python", "/aix-db/scripts/database_ready.py", "--health" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  redis:
+    image: crpi-7xkxsdc0iki61l0q.cn-hangzhou.personal.cr.aliyuncs.com/apconw/redis:7.4.4
+    container_name: aix-db-redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+    ports:
+      - "16379:6379"
+    volumes:
+      - ./volume/redis:/data
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+  postgres:
+    image: crpi-7xkxsdc0iki61l0q.cn-hangzhou.personal.cr.aliyuncs.com/apconw/pgvector:0.8.4-pg17-bookworm
+    restart: unless-stopped
+    container_name: aix-db-pg
+    environment:
+      TZ: Asia/Shanghai
+      POSTGRES_USER: aix_db
+      POSTGRES_PASSWORD: aixDb@2026
+      POSTGRES_DB: aix_db
+    ports:
+      - "15432:5432"
+    volumes:
+      - ./volume/pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "PGPASSWORD=\"$$POSTGRES_PASSWORD\" PGCONNECT_TIMEOUT=3 psql -X -w -h 127.0.0.1 -p 5432 -U \"$$POSTGRES_USER\" -d \"$$POSTGRES_DB\" -v ON_ERROR_STOP=1 -tAc 'SELECT 1' >/dev/null"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
+    stop_grace_period: 60s
+
+
+  sandbox:
+    image: crpi-7xkxsdc0iki61l0q.cn-hangzhou.personal.cr.aliyuncs.com/apconw/aix-db-sandbox:latest
+    ports:
+      - "127.0.0.1:15300:5300"
+    restart: unless-stopped
+    read_only: true
+    tmpfs:
+      - /var/atbox/root/tmp:rw,noexec,nosuid,nodev,mode=1777,size=512m
+      - /tmp:rw,noexec,nosuid,nodev,mode=1777,size=64m
+    cap_drop: [ALL]
+    cap_add: [CHOWN, DAC_OVERRIDE, SETUID, SETGID, SYS_CHROOT, KILL]
+    security_opt: ["no-new-privileges:true"]
+    pids_limit: 128
+    mem_limit: 2g
+    cpus: 2.0
+    environment:
+      ATBOX_MAX_WORKERS: "4"
+    healthcheck:
+      test: ["CMD", "/usr/local/bin/python3", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:5300/healthz', timeout=2)"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+      start_period: 10s
