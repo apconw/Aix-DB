@@ -38,7 +38,7 @@ Aix-DB 基于 **LangChain/LangGraph** 框架，结合 **MCP Skills** 多智能�
 
 Aix-DB Pro 面向企业业务分析场景，将自然语言问数、图表分析、报告中心与数据看板融于一体。从日常数据查询到经营指标追踪，用对话探索数据，让分析成果持续复用。
 
-- [本地部署 docker-compose.yaml](./docs/docker-compose.yaml?raw=1)
+- [点击下载 docker-compose.yaml](https://github.com/user-attachments/files/34256900/docker-compose.yaml)
 - [帮助文档](https://ucnr3jmj44ym.feishu.cn/wiki/VHUWwbsCEimDEwkoUeQcNYGWn1e?fromScene=spaceOverview)
 
 - **对话式数据分析**：用自然语言提问，结合明细表格与可视化图表查看结果、继续追问。
