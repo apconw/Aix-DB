@@ -153,6 +153,47 @@ Aix-DB Pro 面向企业业务分析场景，将自然语言问数、图表分析
 
 <p align="center"><sub>以上为Pro版界面展示，点击图片可查看原图。</sub></p>
 
+## 招聘助手与合作
+
+<table align="center">
+  <tr>
+    <td colspan="2" align="center">
+      <b>BOSS 直聘智能招聘助手</b><br /><br />
+      AI 简历筛选、候选人评估、投递沟通与招聘数据管理。<br /><br />
+      欢迎招聘宣传、产品体验、流程合作与定制开发。<br /><br />
+      微信：<b>weber812</b><br />
+      备注：<b>招聘助手合作</b>
+    </td>
+  </tr>
+  <tr>
+    <td width="50%">
+      <img src="./docs/docs/images/recruitment-assistant-dashboard.png" alt="招聘助手工作台" width="100%" />
+    </td>
+    <td width="50%">
+      <img src="./docs/docs/images/recruitment-assistant-candidates.png" alt="招聘助手候选人评估" width="100%" />
+    </td>
+  </tr>
+</table>
+
+### RPA 数据采集与分析场景合作
+
+<table align="center">
+  <tr>
+    <td colspan="2" align="center">
+      <b>抖音、美团等平台的自动化数据采集与分析</b><br /><br />
+      通过 RPA 自动打开页面、采集评论与业务数据、整理和分析，输出报告竞品分析、门店评价与运营决策。
+    </td>
+  </tr>
+  <tr>
+    <td width="50%">
+      <img src="./docs/docs/images/rpa-meituan-review-collection.png" alt="RPA 美团评价数据采集与分析" width="100%" />
+    </td>
+    <td width="50%">
+      <img src="./docs/docs/images/rpa-douyin-comment-collection.png" alt="RPA 抖音评论数据采集与分析" width="100%" />
+    </td>
+  </tr>
+</table>
+
 ## 演示视频
 
 <table align="center">
