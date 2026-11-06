@@ -49,7 +49,7 @@ Aix-DB Pro 面向企业业务分析场景，将自然语言问数、图表分析
 <table align="center">
   <tr>
     <td align="center" width="200">
-      <img src="./docs/docs/images/wechat.jpg" alt="合作与工作机会：个人微信二维码" width="180" /><br />
+      <img src="./docs/docs/images/wechat.jpg" alt="交流学习与工作机会：个人微信二维码" width="180" /><br />
       <sub><b>个人微信</b></sub>
     </td>
     <td align="center" width="200">
@@ -57,10 +57,10 @@ Aix-DB Pro 面向企业业务分析场景，将自然语言问数、图表分析
       <sub><b>微信公众号</b></sub>
     </td>
     <td valign="middle">
-      <b>独立开发者，欢迎洽谈合作与合适的工作机会</b><br /><br />
+      <b>独立开发者，欢迎交流学习，也关注合适的工作机会</b><br /><br />
       微信号：<b>weber812</b><br />
-      添加时请备注：<b>合作 / 工作机会</b><br /><br />
-      专注大模型应用与企业数据分析，欢迎就项目合作或合适的工作机会通过微信联系，也欢迎同行交流、分享经验。
+      添加时请备注：<b>交流学习 / 工作机会</b><br /><br />
+      专注大模型应用与企业数据分析，欢迎同行通过微信交流学习、分享经验，如有合适的工作机会，也欢迎联系。
     </td>
   </tr>
 </table>
